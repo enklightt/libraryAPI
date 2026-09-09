@@ -1,0 +1,1362 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+<title>LibraFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--bg2:#161b26;--bg3:#1c2333;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#e6edf3;--text2:#8b949e;--text3:#484f58;--accent:#5B8EE6;--accent-dim:rgba(91,142,230,0.12);--green:#1D9E75;--green-dim:rgba(29,158,117,0.12);--red:#D85A30;--red-dim:rgba(216,90,48,0.12);--radius:8px;--radius-lg:12px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+.topbar{background:var(--bg2);border-bottom:0.5px solid var(--border);height:56px;display:flex;align-items:center;padding:0 24px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;color:var(--text);text-decoration:none;flex-shrink:0;cursor:pointer}
+.logo-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{font-size:13px;padding:8px 20px;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .25s ease}
+.btn:hover{background:var(--bg3);color:var(--text);border-color:var(--accent);transform:translateY(-1px)}
+.btn-filled{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(91,142,230,0.25)}
+.btn-filled:hover{background:#4a7dd4;box-shadow:0 4px 14px rgba(91,142,230,0.35)}
+.btn-success{background:var(--green);border-color:var(--green);color:#fff}
+.btn-success:hover{background:#168a62}
+.page-layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:200px;flex-shrink:0;background:var(--bg2);border-right:0.5px solid var(--border);padding:18px 10px;overflow-y:auto}
+.sidebar-section{margin-bottom:20px}
+.sidebar-heading{font-size:12px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:0 12px;margin-bottom:10px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);font-size:14px;color:var(--text2);cursor:pointer;transition:all .2s ease;text-decoration:none}
+.sidebar-item:hover{background:var(--bg3);color:var(--text)}
+.sidebar-item.active{background:var(--accent-dim);color:var(--accent)}
+.sidebar-item.active i{color:var(--accent)}
+.sidebar-item i{font-size:18px;color:var(--text3);flex-shrink:0}
+.sidebar-badge{margin-left:auto;font-size:10px;background:var(--bg3);color:var(--text3);padding:1px 7px;border-radius:10px}
+.content{flex:1;padding:28px 36px;min-width:0;max-width:1320px}
+.page{display:none;opacity:0}
+.page.active{display:block;animation:fadeIn .3s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.section-title{font-size:20px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px}
+.section-title i{font-size:22px;color:var(--accent)}
+.catalog-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.catalog-controls select{font-size:13px;padding:8px 14px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:border-color .2s}
+.catalog-controls select:hover{border-color:var(--border2)}
+.catalog-controls .search-box{display:flex;align-items:center;gap:10px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius);padding:0 16px;height:40px;flex:1;max-width:280px;transition:border-color .2s}
+.catalog-controls .search-box:focus-within{border-color:var(--accent)}
+.catalog-controls .search-box input{background:none;border:none;outline:none;color:var(--text);font-size:14px;width:100%}
+.catalog-controls .search-box input::placeholder{color:var(--text3)}
+.catalog-meta{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.catalog-count{font-size:13px;color:var(--text3)}
+.catalog-pagination{display:flex;gap:4px;align-items:center}
+.catalog-pagination button{padding:8px 16px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text2);cursor:pointer;font-size:13px;transition:all .2s}
+.catalog-pagination button:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.catalog-pagination button.active{border-color:var(--accent);background:var(--accent);color:#fff}
+.catalog-pagination button:disabled{opacity:0.3;cursor:default}
+.books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:18px;margin-top:18px}
+.book-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;display:flex;flex-direction:column;height:100%;perspective:1000px}
+.book-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.3);border-color:var(--border2)}
+.book-cover{width:100%;aspect-ratio:2/3;position:relative;overflow:visible;display:block;background:var(--bg3);border-radius:0;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.175,.885,.32,1.275)}
+.book-card:hover .book-cover{transform:rotateY(180deg)}
+.cover-front,.cover-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:0;overflow:hidden}
+.cover-front{display:flex;align-items:center;justify-content:center}
+.cover-front img,.cover-front span{width:100%;height:100%;object-fit:cover;display:flex;align-items:center;justify-content:center}
+.cover-back{transform:rotateY(180deg);background:linear-gradient(135deg,var(--bg3),var(--bg2));padding:16px;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:11px;color:var(--text2);line-height:1.5;gap:6px}
+.cover-back-rating{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:2px}
+.cover-back-desc{font-size:11px;color:var(--text2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;line-height:1.6}
+.cover-back-empty{font-size:11px;color:var(--text3);font-style:italic}
+.cover-b1{background:#1a3a5c}
+.cover-b2{background:#0d3d2e}
+.cover-b3{background:#3d1a0a}
+.cover-b4{background:#2a1a4a}
+.cover-b5{background:#0d3d3d}
+.cover-b6{background:#3a1a2a}
+.cover-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.modal-cover{position:relative;overflow:hidden}
+.modal-cover::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%);z-index:1;pointer-events:none}
+.modal-cover>*{position:relative;z-index:2}
+.reading-cover{position:relative;overflow:hidden}
+.reading-cover::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 50%);z-index:1;pointer-events:none}
+.reading-cover>*{position:relative;z-index:2}
+.fav-cover{overflow:hidden}
+.fav-cover::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 50%);z-index:1;pointer-events:none}
+.fav-cover>*{position:relative;z-index:2}
+.book-meta{flex:1;padding:14px 16px 0}
+.bcg{font-size:10px;padding:3px 10px;border-radius:10px;background:var(--accent-dim);color:var(--accent);display:inline-block;margin-bottom:6px}
+.bct{font-size:15px;font-weight:600;color:var(--text);line-height:1.35;margin-bottom:2px}
+.bca{font-size:12px;color:var(--text2);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bcr{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text3);flex-wrap:wrap}
+.rating{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2)}
+.rating i{font-size:13px;color:#EF9F27}
+.reviews-count{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--text3)}
+.reviews-count i{font-size:12px}
+.pages{font-size:12px;color:var(--text3);margin-left:auto}
+.book-progress{height:4px;background:var(--bg3);border-radius:3px;margin-top:8px;overflow:hidden}
+.book-progress-fill{height:100%;border-radius:3px;transition:width .3s ease}
+.book-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding:8px 12px 12px}
+.book-actions .btn{font-size:12px;padding:6px 12px;flex-shrink:0}
+.btn-favorite{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;font-size:16px;transition:all .25s ease;padding:0;flex-shrink:0}
+.btn-favorite:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);transform:scale(1.08)}
+.btn-favorite.active{color:var(--red);border-color:var(--red);background:var(--red-dim);transform:scale(1.05)}
+.btn-want{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all .25s ease;padding:0;flex-shrink:0}
+.btn-want:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);transform:scale(1.08)}
+.btn-want.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.btn-want svg{width:16px;height:16px}
+.btn-want.active svg{fill:var(--accent)}
+.tag{font-size:11px;padding:4px 12px;border-radius:10px;display:inline-block}
+.tag-green{background:var(--green-dim);color:var(--green)}
+.tag-blue{background:var(--accent-dim);color:var(--accent)}
+.tag-red{background:var(--red-dim);color:var(--red)}
+.tag-purple{background:rgba(127,119,221,0.12);color:#7F77DD}
+.item-list{display:flex;flex-direction:column;gap:8px}
+.continue-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.item-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .25s ease}
+.item-card:hover{border-color:var(--border2);transform:translateX(3px)}
+.item-info{flex:1;min-width:0}
+.item-title{font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-author{font-size:12px;color:var(--text2);margin-bottom:8px}
+.progress-bar{flex:1;height:3px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px}
+.progress-pct{font-size:11px;color:var(--text3);flex-shrink:0;min-width:40px;text-align:right}
+.reading-summary{font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.6}
+.reading-summary strong{color:var(--text);font-weight:600}
+.reading-grid{display:grid;grid-template-columns:repeat(auto-fill,240px);gap:18px;justify-content:center}
+.reading-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all .3s ease;cursor:pointer;display:flex;flex-direction:column}
+.reading-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.3);border-color:var(--border2)}
+.reading-cover{aspect-ratio:2/3;flex-shrink:0;position:relative;overflow:hidden}
+.reading-cover-icon{position:absolute;top:12px;right:14px;font-size:20px;opacity:.4;pointer-events:none}
+.reading-body{flex:1;display:flex;flex-direction:column;padding:16px 18px;min-height:0}
+.reading-body-title{font-size:16px;font-weight:600;color:var(--text);line-height:1.35;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reading-body-author{font-size:12px;color:var(--text2);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reading-progress-line{font-size:14px;color:var(--text2);margin-bottom:10px;line-height:1.4}
+.reading-progress-bar{height:5px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:0;flex-shrink:0}
+.reading-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),#7FB0FF);transition:width .4s ease}
+.reading-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;border-top:0.5px solid var(--border);flex-shrink:0}
+.reading-footer .btn-filled{padding:6px 14px;font-size:12px}
+.reading-footer-date{font-size:11px;color:var(--text3)}
+.reading-footer-label{font-size:11px;color:var(--text3);line-height:1}
+.reading-body-stars{font-size:18px;margin-bottom:6px;letter-spacing:1px}
+.reading-body-meta{display:flex;gap:12px;font-size:12px;color:var(--text3);margin-bottom:6px;flex-wrap:wrap}
+.reading-body-quote{font-size:12px;font-style:italic;color:var(--text2);line-height:1.5;margin-bottom:6px;padding-left:10px;border-left:2px solid var(--accent-dim);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.reading-body-text{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.favorites-grid{display:grid;grid-template-columns:repeat(auto-fill,240px);gap:18px;justify-content:center}
+.fav-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all .3s ease;cursor:pointer;display:flex;flex-direction:column}
+.fav-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,0.3);border-color:var(--border2)}
+.fav-cover{aspect-ratio:2/3;flex-shrink:0;position:relative;overflow:hidden}
+.fav-heart{position:absolute;top:12px;right:14px;font-size:20px;opacity:.4;pointer-events:none}
+.fav-body{flex:1;display:flex;flex-direction:column;padding:16px 18px;min-height:0}
+.fav-quote{font-size:12px;font-style:italic;color:var(--text2);line-height:1.5;margin-bottom:6px;padding-left:10px;border-left:2px solid var(--accent-dim);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.fav-desc{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+.fav-stats{display:flex;gap:12px;margin-bottom:6px;font-size:12px;color:var(--text3);flex-wrap:wrap}
+.fav-stat{display:flex;align-items:center;gap:4px}
+.fav-footer{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;border-top:0.5px solid var(--border);flex-shrink:0}
+.fav-added{font-size:11px;color:var(--text3)}
+.fav-footer .btn-filled{padding:6px 14px;font-size:12px}
+.finished-card .reading-cover{background:linear-gradient(135deg,#1D9E75,#14634a)!important}
+.finished-card .reading-progress-fill{background:linear-gradient(90deg,var(--green),#2ECC71)!important}
+.dropped-card .reading-cover{background:linear-gradient(135deg,#5a3030,#3d1a1a)!important}
+.dropped-card .reading-progress-fill{background:linear-gradient(90deg,var(--red),#E67E22)!important}
+.mini-card{display:flex;align-items:center;gap:16px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px;transition:all .25s ease;cursor:pointer}
+.mini-card:hover{transform:translateX(4px);border-color:var(--border2)}
+.mini-cover{width:52px;height:70px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;position:relative}
+.mini-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.mini-body-title{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-body-author{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-progress{display:flex;align-items:center;gap:8px}
+.mini-progress-bar{flex:1;height:4px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.mini-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),#7FB0FF);transition:width .4s ease}
+.mini-progress-pct{font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;min-width:40px;text-align:right}
+.mini-info{font-size:11px;color:var(--text3)}
+.progress-bar-wrap{margin-top:6px;display:flex;align-items:center;gap:8px}
+.favorite-date{font-size:10px;color:var(--text3);margin-top:4px}
+.empty{text-align:center;padding:2rem 1rem;color:var(--text3)}
+.empty-icon{font-size:28px;margin-bottom:8px}
+.empty p{font-size:13px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:90vw;max-width:640px;max-height:88vh;position:relative;box-shadow:0 25px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;padding:24px}
+#bookModalContent.modal{padding:0}
+.modal-overlay.open .modal{animation:modalFadeIn .3s ease forwards}
+@keyframes modalFadeIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes skeleton-pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.modal-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;z-index:20;transition:all .2s ease}
+.modal-close:hover{background:rgba(0,0,0,.7);transform:scale(1.1)}
+.modal-scroll{overflow-y:auto;padding:28px 28px 20px;flex:1}
+.modal-scroll::-webkit-scrollbar{width:4px}.modal-scroll::-webkit-scrollbar-track{background:transparent}.modal-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.modal-top{display:flex;gap:20px;margin-bottom:20px}
+.modal-cover{flex-shrink:0;width:120px}
+.modal-cover img{width:100%;border-radius:10px;display:block;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.modal-cover .placeholder{width:100%;aspect-ratio:3/4;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:700;color:rgba(255,255,255,.12);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.modal-info{flex:1;min-width:0;padding-top:4px}
+.modal-info h2{font-size:20px;font-weight:700;line-height:1.3;margin-bottom:2px}
+.modal-info .sub{font-size:13px;color:var(--text2);margin-bottom:10px}
+.modal-info .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.modal-info .tags span{padding:3px 12px;border-radius:14px;font-size:11px;background:var(--bg3);border:0.5px solid var(--border2);color:var(--text2)}
+.modal-info .tags .accent{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.modal-info .rt{font-size:13px;color:var(--text2)}
+.modal-info .rt .star{color:#fbbf24}
+.modal-body-inner{color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:16px}
+.modal-body-inner .qt{font-style:italic;padding:12px 16px;border-left:3px solid var(--accent);background:var(--bg3);border-radius:var(--radius);margin-bottom:14px;font-size:13px;color:var(--text2)}
+.modal-strip{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.modal-section{font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+#bookChatMessages::-webkit-scrollbar{width:4px}#bookChatMessages::-webkit-scrollbar-track{background:transparent}#bookChatMessages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.auth-modal .modal{max-width:380px}
+.auth-tabs{display:flex;margin-bottom:20px;border-bottom:0.5px solid var(--border)}
+.auth-tab{flex:1;padding:10px 0;text-align:center;font-size:14px;color:var(--text2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .25s ease}
+.auth-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.auth-title{font-size:18px;font-weight:600;margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.btn-block{width:100%;margin-top:8px}
+.status-msg{font-size:12px;margin-top:8px;display:none}
+.status-msg.show{display:block}
+.status-msg.ok{color:var(--green)}
+.status-msg.err{color:var(--red)}
+.manage-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:24px}
+.manage-hint{font-size:11px;color:var(--text3);margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-select{width:100%;padding:10px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:14px;transition:border-color .2s}
+.field-select:focus{border-color:var(--accent);outline:none}
+.file-btn{display:inline-block;padding:8px 16px;border-radius:var(--radius);border:0.5px solid var(--border2);font-size:12px;cursor:pointer;transition:all .2s}
+.file-btn:hover{background:var(--bg3)}
+.file-chosen{font-size:12px;color:var(--text3);margin-left:10px}
+.form-actions{display:flex;gap:10px;margin-top:16px}
+.user-table{width:100%;font-size:13px;border-collapse:collapse}
+.user-table th,.user-table td{text-align:left;padding:10px 12px;border-bottom:0.5px solid var(--border)}
+.user-table th{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.role-select{font-size:12px;padding:5px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);transition:border-color .2s}
+.role-select:focus{border-color:var(--accent);outline:none}
+.review-item{padding:12px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.review-item:last-child{border-bottom:none}
+.review-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.review-author{font-weight:500;font-size:13px}
+.review-stars{color:#EF9F27;font-size:13px}
+.review-date{font-size:11px;color:var(--text3)}
+.review-text{font-size:13px;color:var(--text2);line-height:1.5}
+.review-delete{width:24px;height:24px;border-radius:50%;border:0.5px solid var(--red-dim);background:transparent;color:var(--red);font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .25s ease}
+.review-delete:hover{background:var(--red-dim);transform:scale(1.15)}
+.profile-section.mb-0{margin-bottom:0}
+.heatmap-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;overflow-x:auto}
+.heatmap-grid{display:grid;grid-template-columns:28px repeat(12,17px);grid-template-rows:14px repeat(7,17px);gap:3px;font-size:9px;color:var(--text3)}
+.heatmap-grid .mg{grid-column:2/span 12;grid-row:1;display:grid;grid-template-columns:repeat(12,17px)}
+.heatmap-grid .mn{display:flex;align-items:center;height:14px}
+.heatmap-grid .dw{grid-column:1;text-align:right;padding-right:3px;height:14px;line-height:14px}
+.heatmap-grid .cl{width:14px;height:14px;border-radius:3px;background:var(--bg3);position:relative;cursor:pointer;transition:all .15s}
+.heatmap-grid .cl:hover{transform:scale(1.4);outline:1px solid var(--text2);z-index:2}
+.heatmap-grid .cl.l1{background:rgba(91,142,230,0.12)}
+.heatmap-grid .cl.l2{background:rgba(91,142,230,0.25)}
+.heatmap-grid .cl.l3{background:rgba(91,142,230,0.45)}
+.heatmap-grid .cl.l4{background:rgba(91,142,230,0.65)}
+.heatmap-grid .cl.l5{background:var(--accent)}
+.heatmap-grid .cl .tip{position:absolute;bottom:calc(100%+4px);left:50%;transform:translateX(-50%);background:var(--bg);border:0.5px solid var(--border2);border-radius:4px;padding:3px 7px;font-size:10px;color:var(--text);white-space:nowrap;pointer-events:none;opacity:0;z-index:10}
+.heatmap-grid .cl:hover .tip{opacity:1}
+.heatmap-legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:10px}
+.heatmap-legend span{font-size:10px;color:var(--text3)}
+.heatmap-legend .cl{width:12px;height:12px;cursor:default;border-radius:3px;background:var(--bg3)}
+.heatmap-legend .cl.l1{background:rgba(91,142,230,0.12)}.heatmap-legend .cl.l2{background:rgba(91,142,230,0.25)}.heatmap-legend .cl.l3{background:rgba(91,142,230,0.45)}.heatmap-legend .cl.l4{background:rgba(91,142,230,0.65)}.heatmap-legend .cl.l5{background:var(--accent)}
+
+.recent-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+.recent-card{flex:0 0 155px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all .25s ease}
+.recent-card:hover{transform:translateY(-4px);border-color:var(--border2);box-shadow:0 8px 20px rgba(0,0,0,0.2)}
+.recent-card-cover{width:100%;aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--text);position:relative;overflow:hidden}
+.recent-card-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.recent-card-body{padding:10px 12px}
+.recent-card-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-card-author{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.recent-card-stars{font-size:11px;color:#EF9F27;letter-spacing:1px}
+
+.ach-list{display:flex;flex-direction:column;gap:8px}
+.ach-row{display:flex;align-items:center;gap:12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;transition:all .25s ease}
+.ach-row:hover{border-color:var(--border2)}
+.ach-row:not(.unlocked){opacity:0.5}
+.ach-row-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ach-row.unlocked .ach-row-icon{animation:pulse 2s ease infinite}
+.ach-row-body{flex:1;min-width:0}
+.ach-row-title{font-size:13px;font-weight:600;color:var(--text)}
+.ach-row-desc{font-size:11px;color:var(--text2);margin-top:1px}
+.ach-row-bar-wrap{display:flex;align-items:center;gap:8px;margin-top:6px}
+
+/* Friends */
+.friends-header-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:20px}
+.friends-search-wrap{display:flex;gap:10px;position:relative}
+.friends-search-inner{flex:1;display:flex;align-items:center;gap:10px;background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--radius);padding:0 14px;height:42px;transition:border-color .2s}
+.friends-search-inner:focus-within{border-color:var(--accent)}
+.friends-search-inner .ti{font-size:16px;color:var(--text3);flex-shrink:0}
+.friends-search-inner input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px}
+.friends-search-inner input::placeholder{color:var(--text3)}
+.friends-search-wrap button{height:42px;padding:0 20px;white-space:nowrap;border-radius:var(--radius);border:0.5px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:13px;cursor:pointer;transition:all .25s;flex-shrink:0}
+.friends-search-wrap button:hover{background:var(--accent);color:#fff}
+.friends-search-wrap button:disabled{opacity:.4;cursor:default;background:var(--bg3);border-color:var(--border2);color:var(--text3)}
+.friend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.friend-card{display:flex;align-items:center;gap:14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;transition:all .25s ease;cursor:pointer}
+.friend-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.25);background:linear-gradient(135deg,var(--bg2),var(--bg3))}
+.friend-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+.friend-body{flex:1;min-width:0}
+.friend-name{font-size:14px;font-weight:600;color:var(--text)}
+.friend-title{font-size:11px;color:var(--accent);margin-top:2px}
+.friend-remove{width:30px;height:30px;border-radius:50%;border:0.5px solid transparent;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .2s;opacity:0}
+.friend-card:hover .friend-remove{opacity:1}
+.friend-remove:hover{background:rgba(220,53,69,0.15);border-color:var(--red);color:var(--red)}
+.autocomplete-dropdown{position:absolute;top:calc(100%+4px);left:0;right:100px;z-index:100;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.autocomplete-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:background .15s}
+.autocomplete-item:hover,.autocomplete-item.highlighted{background:var(--bg3)}
+.autocomplete-item-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.autocomplete-item-body{flex:1;min-width:0}
+.autocomplete-item-name{font-size:13px;font-weight:500;color:var(--text)}
+.autocomplete-item-title{font-size:10px;color:var(--accent)}
+.autocomplete-empty{padding:12px;text-align:center;font-size:12px;color:var(--text3)}
+.requests-section{margin-bottom:20px}
+.requests-heading{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text2);margin-bottom:12px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
+.requests-heading .ti{font-size:16px;color:var(--text3)}
+.requests-heading span{margin-left:auto;font-size:11px;background:var(--bg3);color:var(--text3);padding:2px 10px;border-radius:10px}
+.request-card{display:flex;align-items:center;gap:14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:10px;transition:all .2s}
+.request-card:hover{border-color:var(--border2);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.request-card-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.request-card-body{flex:1;min-width:0}
+.request-card-name{font-size:14px;font-weight:600;color:var(--text)}
+.request-card-title{font-size:11px;color:var(--accent);margin-top:1px}
+.request-card-actions{display:flex;gap:8px}
+.request-card-actions button{padding:6px 14px;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;transition:all .2s}
+.request-card-actions button:hover{background:var(--bg3);color:var(--text)}
+.request-card-actions .btn-accept{border-color:var(--green);color:var(--green)}
+.request-card-actions .btn-accept:hover{background:var(--green-dim)}
+.request-card-actions .btn-reject{border-color:var(--red);color:var(--red)}
+.request-card-actions .btn-reject:hover{background:var(--red-dim)}
+
+/* Skeleton */
+.skeleton{animation:skeleton-pulse 1.5s ease infinite;background:var(--bg3);border-radius:var(--radius)}
+.skeleton-card{border-radius:var(--radius-lg);overflow:hidden;background:var(--bg2);border:0.5px solid var(--border)}
+.skeleton-cover{width:100%;aspect-ratio:2/3;background:var(--bg3)}
+.skeleton-meta{padding:12px}
+.skeleton-line{height:12px;border-radius:6px;background:var(--bg3);margin-bottom:8px}
+.skeleton-line-sm{height:10px;width:60%;border-radius:5px;background:var(--bg3)}
+.skeleton-avatar{width:48px;height:48px;border-radius:50%;background:var(--bg3);flex-shrink:0}
+.skeleton-bar{height:4px;border-radius:3px;background:var(--bg3);margin:0 12px 12px}
+
+.friend-profile-header{display:flex;align-items:center;gap:16px;padding:16px 0;margin-bottom:16px;border-bottom:0.5px solid var(--border)}
+.friend-profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0}
+.friend-profile-info{flex:1}
+.friend-profile-name{font-size:18px;font-weight:600;color:var(--text)}
+.friend-profile-email{font-size:12px;color:var(--text2);margin-top:2px}
+.friend-profile-title{font-size:12px;color:var(--accent);margin-top:2px}
+.friend-profile-stats{display:flex;gap:20px;margin-top:8px}
+.friend-profile-stat{text-align:center}
+.friend-profile-stat-value{font-size:18px;font-weight:700;color:var(--text)}
+.friend-profile-stat-label{font-size:10px;color:var(--text3)}
+.friend-subsection-title{font-size:13px;font-weight:500;color:var(--text2);margin:14px 0 10px;display:flex;align-items:center;gap:6px}
+.friend-books{display:grid;grid-template-columns:1fr;gap:10px}
+.friend-modal-scroll{overflow-y:auto;flex:1;min-height:0;padding:0 4px}
+.friend-book-card{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--bg3);border-radius:var(--radius);border:0.5px solid var(--border);transition:background .15s}
+.friend-book-card:hover{background:var(--bg2);border-color:var(--border2)}
+.friend-book-cover{width:40px;height:56px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.3);position:relative}
+.friend-book-cover img{width:100%;height:100%;object-fit:cover}
+.friend-book-info{flex:1;min-width:0}
+.friend-book-title{font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friend-book-author{font-size:12px;color:var(--text2);margin-top:2px}
+.friend-book-meta{font-size:12px;color:var(--text3);flex-shrink:0}
+.ach-row-bar{flex:1;height:5px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.ach-row-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),#7FB0FF);transition:width .4s ease}
+.ach-row.unlocked .ach-row-fill{background:linear-gradient(90deg,var(--green),#2ECC71)}
+.ach-row-pct{font-size:11px;color:var(--text3);flex-shrink:0;min-width:34px;text-align:right}
+
+.profile-header{display:flex;align-items:center;gap:24px;margin-bottom:24px}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:600;flex-shrink:0}
+.profile-header-info{flex:1;min-width:0}
+.profile-name{font-size:24px;font-weight:600;margin-bottom:2px}
+.profile-title{font-size:14px;color:var(--accent);margin-bottom:4px;font-weight:500}
+.profile-email{font-size:13px;color:var(--text2);margin-bottom:4px}
+.profile-badge{font-size:12px;color:var(--text3)}
+.profile-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:24px}
+.profile-stat{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 12px;text-align:center}
+.profile-stat-value{font-size:22px;font-weight:700;color:var(--text);margin-bottom:2px}
+.profile-stat-label{font-size:11px;color:var(--text2);line-height:1.3}
+.profile-section{margin-bottom:24px}
+.profile-section-title{font-size:15px;font-weight:600;margin-bottom:12px;color:var(--text)}
+.profile-section-title i{margin-right:6px;color:var(--accent-dim)}
+.title-selector{display:flex;flex-wrap:wrap;gap:6px}
+.title-chip{padding:6px 14px;border-radius:20px;border:0.5px solid var(--border);font-size:13px;color:var(--text2);cursor:pointer;transition:all .2s ease;background:var(--bg2)}
+.title-chip:hover{border-color:var(--border2);color:var(--text)}
+.title-chip.active{background:var(--accent-dim);color:var(--text);border-color:var(--accent-dim);font-weight:500}
+.title-chip.active::before{content:'✓ '}
+.title-chip.none{color:var(--text3);font-size:12px}
+.title-chip.none.active{background:var(--bg3);color:var(--text2);border-color:var(--border)}
+.title-chip.none.active::before{content:'✓ '}
+.profile-data{display:flex;flex-direction:column;gap:8px}
+.profile-data-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.profile-data-item:last-child{border-bottom:none}
+.profile-data-label{font-size:14px;color:var(--text2)}
+.profile-data-value{font-size:14px;font-weight:500}
+
+.ach-progress-bar{height:8px;background:var(--bg3);border-radius:6px;overflow:hidden;margin-bottom:8px}
+.ach-progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),#7FB0FF,#b388ff);transition:width .5s ease}
+.ach-progress-info{font-size:14px;color:var(--text2);margin-bottom:18px}
+.ach-progress-info strong{color:var(--text);font-weight:600}
+.ach-hero{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px}
+.ach-h{display:flex;align-items:center;gap:12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;transition:all .25s ease}
+.ach-h:hover{border-color:var(--border2);transform:translateY(-2px)}
+.ach-h-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ach-h-info{flex:1;min-width:0}
+.ach-h-title{font-size:12px;font-weight:600;color:var(--text)}
+.ach-h-desc{font-size:10px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ach-h.unlocked .ach-h-icon{animation:pulse 2s ease infinite}
+.ach-h-badge{width:22px;height:22px;border-radius:50%;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.ach-card{display:flex;align-items:center;gap:14px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;transition:all .25s ease;position:relative}
+.ach-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.2)}
+.ach-card.unlocked{border-color:var(--accent-dim)}
+.ach-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ach-blue{background:var(--accent-dim);color:var(--accent)}
+.ach-green{background:rgba(29,158,117,0.12);color:var(--green)}
+.ach-gold{background:rgba(239,159,39,0.12);color:#EF9F27}
+.ach-purple{background:rgba(127,119,221,0.12);color:#7F77DD}
+.ach-card-body{flex:1;min-width:0}
+.ach-card-title{font-size:14px;font-weight:600;color:var(--text)}
+.ach-card-desc{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.4}
+.ach-card-progress{display:flex;align-items:center;gap:8px;margin-top:8px}
+.ach-card-bar{flex:1;height:5px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.ach-card-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),#7FB0FF);transition:width .4s ease}
+.ach-card.unlocked .ach-card-fill{background:linear-gradient(90deg,var(--green),#2ECC71)}
+.ach-card-pct{font-size:11px;color:var(--text3);flex-shrink:0}
+.ach-card-check{width:24px;height:24px;border-radius:50%;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;position:absolute;top:10px;right:10px}
+.ach-card:not(.unlocked){opacity:.75}
+.ach-card:not(.unlocked) .ach-card-icon{opacity:.5}
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:12px 20px;font-size:13px;color:var(--text);box-shadow:0 6px 24px rgba(0,0,0,0.4);animation:slideIn .3s ease}
+.toast.ok{border-color:var(--green-dim)}
+.toast.err{border-color:var(--red-dim)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+footer{background:var(--bg2);border-top:0.5px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+footer span{font-size:12px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" onclick="goPage('home')"><div class="logo-icon"><i class="ti ti-book-2"></i></div>LibraFlow</a>
+  <div class="topbar-right">
+    <button class="btn" id="btn-auth" onclick="openAuthModal()" style="">Увійти</button>
+    <button class="btn btn-filled" id="btn-register" onclick="openAuthModal('register')" style="">Реєстрація</button>
+    <button class="btn" id="btn-logout" style="display:none" onclick="logout()">Вийти</button>
+  </div>
+</header>
+
+<div class="page-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Навігація</div>
+      <div class="sidebar-item active" id="sl-home" onclick="goPage('home')"><i class="ti ti-home"></i> Головна</div>
+      <div class="sidebar-item" id="sl-favorites" onclick="goPage('favorites')"><i class="ti ti-heart"></i> Улюблені</div>
+    </div>
+    <div class="sidebar-section" id="sidebarUserSection" style="display:none">
+      <div class="sidebar-heading">Читання</div>
+      <div class="sidebar-item" id="sl-reading" onclick="goPage('reading')"><i class="ti ti-book-open"></i> Читаю зараз</div>
+      <div class="sidebar-item" id="sl-finished" onclick="goPage('finished')"><i class="ti ti-circle-check"></i> Прочитані</div>
+      <div class="sidebar-item" id="sl-dropped" onclick="goPage('dropped')"><i class="ti ti-circle-x"></i> Закинуті</div>
+      <div class="sidebar-item" id="sl-want-to-read" onclick="goPage('want-to-read')"><i class="ti ti-bookmark"></i> Хочу прочитати</div>
+      <div class="sidebar-item" id="sl-my-reviews" onclick="goPage('my-reviews')"><i class="ti ti-notes"></i> Мої відгуки</div>
+      <div class="sidebar-item" id="sl-achievements" onclick="goPage('achievements')"><i class="ti ti-trophy"></i> Досягнення</div>
+      <div class="sidebar-item" id="sl-friends" onclick="goPage('friends')"><i class="ti ti-users"></i> Друзі</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Жанри</div>
+      <div id="sidebarGenres"></div>
+    </div>
+    <div class="sidebar-section" id="sidebarAdminSection" style="display:none">
+      <div class="sidebar-heading">Управління</div>
+      <div class="sidebar-item" id="sl-admin-books" onclick="goPage('admin-books')"><i class="ti ti-edit"></i> Книги</div>
+      <div class="sidebar-item" id="sl-admin-users" onclick="goPage('admin-users')"><i class="ti ti-users"></i> Користувачі</div>
+    </div>
+    <div class="sidebar-section" id="sidebarProfileSection" style="display:none">
+      <div class="sidebar-heading">Профіль</div>
+      <div class="sidebar-item" id="sl-profile" onclick="goPage('profile')"><i class="ti ti-user"></i> <span id="sidebarUserName">...</span></div>
+      <div class="sidebar-item" onclick="logout()"><i class="ti ti-logout"></i> Вийти</div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <div class="page active" id="page-home">
+      <div id="continueReadingSection" style="display:none">
+        <div class="section-header"><div class="section-title"><i class="ti ti-player-play"></i> Продовжити читання</div></div>
+        <div class="continue-list" id="continueReadingList"></div>
+      </div>
+      <div class="section-header" style="margin-top:8px">
+        <div class="section-title"><i class="ti ti-books"></i> Каталог книг</div>
+        <div class="catalog-controls">
+          <div class="search-box"><i class="ti ti-search"></i><input id="catalogSearchInput" type="text" placeholder="Пошук..." oninput="debouncedSearch()"></div>
+          <select id="genreFilter"><option value="">Усі жанри</option></select>
+          <select id="sortSelect">
+            <option value="title:asc">Назва А→Я</option>
+            <option value="title:desc">Назва Я→А</option>
+            <option value="author:asc">Автор А→Я</option>
+            <option value="author:desc">Автор Я→А</option>
+            <option value="rating:desc">Рейтинг ↑</option>
+            <option value="rating:asc">Рейтинг ↓</option>
+            <option value="created:desc">Нові</option>
+            <option value="created:asc">Старі</option>
+          </select>
+        </div>
+      </div>
+      <div class="catalog-meta"><span class="catalog-count" id="catalogCount">Знайдено 0 книг</span><div class="catalog-pagination" id="catalogPagination"></div></div>
+      <div class="books-grid" id="catalog-books"><div id="catalogSkeleton" class="books-grid" style="grid-column:1/-1;display:grid;grid-template-columns:inherit;gap:inherit"><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div><div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-meta"><div class="skeleton-line"></div><div class="skeleton-line-sm"></div></div><div class="skeleton-bar"></div></div></div></div>
+      <div class="catalog-meta" style="margin-top:14px"><div class="catalog-pagination" id="catalogPaginationBottom"></div></div>
+    </div>
+
+    <div class="page" id="page-favorites">
+      <div class="section-header"><div class="section-title"><i class="ti ti-heart"></i> Улюблені книги</div></div>
+      <div id="favoriteBooks" class="item-list"><div class="empty"><p>Завантаження…</p></div></div>
+    </div>
+
+    <div class="page" id="page-reading">
+      <div class="section-header"><div class="section-title"><i class="ti ti-book-open"></i> Читаю зараз</div></div>
+      <div id="readingProgressReadingHeader"></div>
+      <div id="readingProgressReading" class="item-list"><div class="empty"><p>Завантаження…</p></div></div>
+    </div>
+
+    <div class="page" id="page-finished">
+      <div class="section-header"><div class="section-title"><i class="ti ti-circle-check"></i> Прочитані</div></div>
+      <div id="readingProgressFinishedHeader"></div>
+      <div id="readingProgressFinished" class="item-list"><div class="empty"><p>Завантаження…</p></div></div>
+    </div>
+
+    <div class="page" id="page-dropped">
+      <div class="section-header"><div class="section-title"><i class="ti ti-circle-x"></i> Закинуті</div></div>
+      <div id="readingProgressDroppedHeader"></div>
+      <div id="readingProgressDropped" class="item-list"><div class="empty"><p>Завантаження…</p></div></div>
+    </div>
+
+    <div class="page" id="page-want-to-read">
+      <div class="section-header"><div class="section-title"><i class="ti ti-bookmark"></i> Хочу прочитати</div></div>
+      <div id="wantToReadBooks" class="item-list"><div class="empty"><p>Завантаження…</p></div></div>
+    </div>
+
+    <div class="page" id="page-my-reviews">
+      <div class="section-header"><div class="section-title"><i class="ti ti-notes"></i> Мої відгуки</div></div>
+      <div id="myReviews" class="item-list"><div class="empty"><p>Завантаження…</p></div></div>
+    </div>
+
+    <div class="page" id="page-achievements">
+      <div class="section-header"><div class="section-title"><i class="ti ti-trophy"></i> Досягнення</div></div>
+      <div id="achSummary"></div>
+      <div class="ach-hero" id="achHero"></div>
+      <div class="ach-grid" id="achGrid"></div>
+    </div>
+
+    <div class="page" id="page-friends">
+      <div class="section-header"><div class="section-title"><i class="ti ti-users"></i> Друзі</div></div>
+      <div id="friendRequestsSection" class="requests-section" style="display:none">
+        <div class="requests-heading"><i class="ti ti-mail"></i> Вхідні заявки<span id="incomingCount">0</span></div>
+        <div id="friendRequestsList"></div>
+        <div class="requests-heading" style="margin-top:16px"><i class="ti ti-send"></i> Відправлені заявки<span id="sentCount">0</span></div>
+        <div id="friendSentRequestsList"></div>
+      </div>
+      <div class="friends-header-card">
+        <div class="friends-search-wrap" style="position:relative">
+          <div class="friends-search-inner">
+            <i class="ti ti-search"></i>
+            <input type="text" id="friendSearchInput" placeholder="Пошук користувачів за іменем…" autocomplete="off" oninput="debouncedFriendSearch()" onkeydown="friendSearchKeydown(event)" onclick="if(this.value.trim())doFriendSearch()">
+          </div>
+          <button onclick="sendFriendRequest()" id="addFriendBtn" disabled>+ Заявка</button>
+          <div id="friendSuggestions" class="autocomplete-dropdown" style="display:none"></div>
+        </div>
+      </div>
+      <div id="friendsList" class="friend-grid"><div id="friendsSkeleton" class="friend-grid" style="grid-column:1/-1;display:grid;grid-template-columns:inherit;gap:inherit"><div class="skeleton-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line" style="width:60%"></div></div></div><div class="skeleton-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line" style="width:60%"></div></div></div><div class="skeleton-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line" style="width:60%"></div></div></div><div class="skeleton-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line" style="width:60%"></div></div></div><div class="skeleton-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line" style="width:60%"></div></div></div><div class="skeleton-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line" style="width:60%"></div></div></div></div></div>
+    </div>
+
+    <div class="page" id="page-profile">
+      <div class="section-header"><div class="section-title"><i class="ti ti-user"></i> Профіль</div></div>
+      <div class="profile-header">
+        <div class="profile-avatar" id="pAvatar">??</div>
+        <div class="profile-header-info">
+          <div class="profile-name" id="pName">—</div>
+          <div class="profile-title" id="pTitle"></div>
+          <div class="profile-email" id="pEmail">—</div>
+          <div class="profile-badge" id="pRole">—</div>
+        </div>
+      </div>
+      <div class="profile-stats" id="profileStats"></div>
+      <div class="profile-section">
+        <div class="profile-section-title"><i class="ti ti-trophy"></i> Титул</div>
+        <div id="profileTitleSelector"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title"><i class="ti ti-info-circle"></i> Інформація</div>
+        <div id="profileData" class="profile-data"><div class="empty"><p>Завантаження…</p></div></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title"><i class="ti ti-calendar-stats"></i> Активність читання</div>
+        <div id="profileHeatmap" class="heatmap-box"><div class="empty"><p>Завантаження…</p></div></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title"><i class="ti ti-books"></i> Нещодавно прочитані</div>
+        <div id="profileRecent" class="recent-row"></div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title"><i class="ti ti-trophy"></i> Досягнення</div>
+        <div id="profileAchievements" class="ach-list"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-admin-books">
+      <div class="section-header"><div class="section-title"><i class="ti ti-edit"></i> Керування книгами</div></div>
+      <div class="manage-card">
+        <div class="manage-hint">Натисни <b>Редагувати</b> на картці — поля заповняться автоматично</div>
+        <input id="bookId" type="hidden">
+        <div class="row2"><div class="field"><label>Назва</label><input id="bookTitle" type="text" placeholder="Назва книги"></div><div class="field"><label>Автор</label><input id="bookAuthor" type="text" placeholder="Автор"></div></div>
+        <div class="row2"><div class="field"><label>ISBN</label><input id="bookIsbn" type="text" placeholder="978-…"></div><div class="field"><label>Жанр</label><select id="bookGenreId" class="field-select"><option value="">— Без жанру —</option></select></div></div>
+        <div class="row2"><div class="field"><label>Рейтинг (0–5)</label><input id="bookRating" type="number" step="0.1" min="0" max="5" placeholder="4.5"></div><div class="field"><label>К-сть сторінок</label><input id="bookPages" type="number" min="1" placeholder="250"></div></div>
+        <div class="row2"><div class="field"><label>PDF файл</label><div><label class="file-btn" for="bookPdfFile">📄 Обрати файл</label><input id="bookPdfFile" type="file" accept=".pdf" hidden><span class="file-chosen" id="fileChosen">Файл не вибрано</span></div></div><div class="field"><label>Обкладинка (URL)</label><input id="bookImageUrl" type="text" placeholder="https://…"></div></div>
+        <div class="row2"><div class="field"><label>Цитата</label><input id="bookQuote" type="text" placeholder="Коротка цитата з книги"></div><div class="field"><label>Опис</label><input id="bookDescription" type="text" placeholder="Короткий опис"></div></div>
+        <div class="row2"><div class="field"><label>Gutenberg ID</label><input id="bookGutenbergId" type="number" min="1" placeholder="1342"></div></div>
+        <div class="field" id="pdfUrlField" style="display:none"><label>PDF URL</label><input id="bookPdfUrl" type="text" placeholder="https://…" readonly></div>
+        <div class="form-actions"><button class="btn btn-filled" onclick="createBook()">+ Створити</button><button class="btn btn-success" onclick="updateBook()">✓ Оновити</button><button class="btn" onclick="clearBookForm()">Очистити</button></div>
+        <div id="bookStatus" class="status-msg"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-admin-users">
+      <div class="section-header"><div class="section-title"><i class="ti ti-users"></i> Керування користувачами</div></div>
+      <div id="userList"></div>
+    </div>
+
+  </main>
+</div>
+
+<footer><span>© 2025 LibraFlow. Всі права захищені.</span><span>
+
+<div class="modal-overlay" id="friendModal" onclick="if(event.target===this)closeFriendModal()">
+  <div class="modal" style="max-width:580px">
+    <button class="modal-close" onclick="closeFriendModal()">✕</button>
+    <div id="friendModalContent" class="friend-modal-scroll"><div class="empty"><p>Завантаження…</p></div></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<div class="modal-overlay" id="confirmModal" style="z-index:400" onclick="if(event.target===this)hideConfirm()">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="padding:8px 0 4px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01"/><path d="M10.29 3.86l-8.6 14.86A1 1 0 0 0 2.5 20h19a1 1 0 0 0 .81-1.28l-8.6-14.86a1 1 0 0 0-1.72 0z"/></svg></div>
+    <p id="confirmMsg" style="margin:.6rem 0 1.4rem;font-size:.95rem;line-height:1.5;color:var(--text2)"></p>
+    <div style="display:flex;gap:.6rem;justify-content:center">
+      <button class="btn" onclick="hideConfirm()" style="padding:8px 22px;font-size:13px">Скасувати</button>
+      <button class="btn" id="confirmOkBtn" style="border-color:var(--red);color:var(--red);padding:8px 22px;font-size:13px">Так, видалити</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bookModal" onclick="if(event.target===this)closeBookModal()">
+  <div class="modal" id="bookModalContent">
+    <button class="modal-close" id="modalCloseBtn" onclick="closeBookModal()">✕</button>
+    <div id="modalBookDetail"></div>
+  </div>
+</div>
+
+<div class="modal-overlay auth-modal" id="authModal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="atab-login" onclick="switchAuthTab('login')">Вхід</button>
+      <button class="auth-tab" id="atab-register" onclick="switchAuthTab('register')">Реєстрація</button>
+    </div>
+    <div id="auth-login">
+      <div class="auth-title">З поверненням</div>
+      <div class="auth-sub">Введіть свої дані для входу</div>
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Пароль</label><input id="loginPassword" type="password" placeholder="••••••••"></div>
+      <button class="btn btn-filled btn-block" onclick="login()">Увійти →</button>
+      <div id="loginStatus" class="status-msg"></div>
+    </div>
+    <div id="auth-register" style="display:none">
+      <div class="auth-title">Створити акаунт</div>
+      <div class="auth-sub">Все безкоштовно, займе хвилину</div>
+      <div class="field"><label>Ім'я</label><input id="registerName" type="text" placeholder="Ваше ім'я"></div>
+      <div class="field"><label>Email</label><input id="registerEmail" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Пароль</label><input id="registerPassword" type="password" placeholder="мін. 8 символів"></div>
+      <button class="btn btn-filled btn-block" onclick="registerUser()">Зареєструватися →</button>
+      <div id="registerStatus" class="status-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COVERS=[['#1a3a5c','#2a5a8c'],['#0d3d2e','#1d6d4e'],['#3d1a0a','#6d3a1a'],['#2a1a4a','#4a2a7a'],['#0d3d3d','#1d6d6d'],['#3a1a2a','#5a2a4a']];
+function coverImg(book){const url=book.imageUrl||book.bookImageUrl||((book.isbn||book.bookIsbn)?'https://covers.openlibrary.org/b/isbn/'+(book.isbn||book.bookIsbn)+'-L.jpg':'');const title=(book.title||book.bookTitle||book.name||'');const inits=title.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return url?'<img class="cover-img" src="'+url+'" loading="lazy" alt="" onerror="this.outerHTML=\'<span style=font-size:10px;font-weight:600;color:#fff>'+inits+'</span>\'">':(inits?'<span style="font-size:10px;font-weight:600;color:#fff">'+inits+'</span>':'')}
+const ACHIEVEMENT_ICONS={first_book:'✓',read_5_books:'⑤',bookworm:'★',night_reader:'☾',favorite_collector:'♥',library_regular:'↺'};
+let allBooks=[],recentBooks=[],allGenres=[],currentUser=null,userFavorites=[],userAchievements=[],userWantToReads=[],userReadingProgress={};
+let catalogPage=1,_confirmCb=null,_cancelCb=null;
+
+function goPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const t=document.getElementById('page-'+name);if(t)t.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(l=>l.classList.remove('active'));
+  const sl=document.getElementById('sl-'+name);if(sl)sl.classList.add('active');
+  if(name==='home'){goToCatalogPage(catalogPage);renderContinueReadingSection()}
+  if(name==='favorites')renderFavorites();
+  if(name==='reading')renderReadingProgress('reading','readingProgressReading');
+  if(name==='finished')renderReadingProgress('finished','readingProgressFinished');
+  if(name==='dropped')renderReadingProgress('dropped','readingProgressDropped');
+  if(name==='want-to-read')renderWantToRead();
+  if(name==='my-reviews')renderUserReviews();
+  if(name==='achievements')renderAchievements();
+  if(name==='friends'){renderFriends();loadFriendRequests()}
+  if(name==='profile')renderProfileData();
+  if(name==='admin-users')renderUserManagement();
+  window.scrollTo({top:0,behavior:'smooth'})
+}
+
+function renderContinueReadingSection(){
+  const s=document.getElementById('continueReadingSection');
+  if(!currentUser||!Object.values(userReadingProgress).filter(p=>p.status==='reading'&&p.progressPercent<100).length){if(s)s.style.display='none';return}
+  if(s){s.style.display='';renderContinueReading()}
+}
+
+function renderContinueReading(){
+  const c=document.getElementById('continueReadingList');
+  if(!c)return;
+  const ip=Object.values(userReadingProgress).filter(p=>p.status==='reading'&&p.progressPercent<100);
+  if(!ip.length){c.innerHTML='';return}
+  c.innerHTML=ip.slice(0,5).map(p=>{
+    const per=Math.round(p.progressPercent),pp=p.pages||p.totalPages||0,cp=p.currentPage||0;
+    const rb=allBooks.find(bb=>bb.id===p.bookId);
+    return '<div class="mini-card" onclick="readBook(\''+p.bookId+'\')"><div class="mini-cover" style="background:var(--bg3)">'+(rb?coverImg(rb):'<i class="ti ti-book-2" style="font-size:22px;opacity:.2"></i>')+'</div><div class="mini-body"><div class="mini-body-title" title="'+p.bookTitle.replace(/"/g,'&quot;')+'">'+p.bookTitle+'</div><div class="mini-body-author">'+p.bookAuthor+'</div><div class="mini-progress"><div class="mini-progress-bar"><div class="mini-progress-fill" style="width:'+per+'%"></div></div><span class="mini-progress-pct">'+per+'%</span></div><div class="mini-info">📄 Стор. '+cp+'/'+pp+'</div></div><button class="btn btn-filled" style="flex-shrink:0;font-size:12px" onclick="event.stopPropagation();readBook(\''+p.bookId+'\')">Читати →</button></div>'
+  }).join('')
+}
+
+function showConfirm(msg,onOk,onCancel){
+  document.getElementById('confirmMsg').textContent=msg;_confirmCb=onOk;_cancelCb=onCancel||null;
+  document.getElementById('confirmModal').classList.add('open')
+}
+function hideConfirm(){document.getElementById('confirmModal').classList.remove('open');if(_cancelCb)_cancelCb();_confirmCb=null;_cancelCb=null}
+document.getElementById('confirmOkBtn').addEventListener('click',function(){const cb=_confirmCb;hideConfirm();if(cb)cb()});
+
+function toast(msg,type){const w=document.getElementById('toasts'),e=document.createElement('div');e.className='toast '+(type||'ok');e.innerHTML=(type==='err'?'✕':'✓')+' '+msg;w.appendChild(e);setTimeout(()=>e.remove(),3500)}
+function setStatus(id,msg,type){const e=document.getElementById(id);e.textContent=msg;e.className='status-msg show '+(type==='success'?'ok':'err')}
+function clearStatus(id){const e=document.getElementById(id);e.textContent='';e.className='status-msg'}
+function getToken(){return localStorage.getItem('token')}
+function setToken(t){localStorage.setItem('token',t)}
+function formatApiErrors(d){if(!d)return'Невідома помилка';if(d.message&&d.errors)return[d.message,...d.errors.map(x=>x.field+': '+x.errors.join(', '))].join('\n');return d.message||JSON.stringify(d,null,2)}
+
+function openAuthModal(tab){
+  document.getElementById('authModal').classList.add('open');
+  if(tab==='register')switchAuthTab('register')
+}
+function closeAuthModal(){document.getElementById('authModal').classList.remove('open')}
+
+function switchAuthTab(tab){
+  document.getElementById('auth-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'block':'none';
+  document.getElementById('atab-login').className='auth-tab '+(tab==='login'?'active':'');
+  document.getElementById('atab-register').className='auth-tab '+(tab==='register'?'active':'')
+}
+
+async function login(){
+  clearStatus('loginStatus');
+  const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;
+  try{
+    const res=await fetch('/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const data=await res.json();
+    if(!res.ok){setStatus('loginStatus',formatApiErrors(data),'error');return}
+    setToken(data.accessToken);closeAuthModal();toast('Вхід успішний 👋','ok');
+    document.getElementById('btn-auth').style.display='none';document.getElementById('btn-register').style.display='none';document.getElementById('btn-logout').style.display='';
+    await loadMe();goPage('home')
+  }catch{setStatus('loginStatus','Помилка під час входу','error')}
+}
+
+async function registerUser(){
+  clearStatus('registerStatus');
+  const name=document.getElementById('registerName').value.trim(),email=document.getElementById('registerEmail').value.trim(),password=document.getElementById('registerPassword').value;
+  try{
+    const res=await fetch('/api/v1/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
+    const data=await res.json();
+    if(!res.ok){setStatus('registerStatus',formatApiErrors(data),'error');return}
+    setToken(data.accessToken);closeAuthModal();toast('Акаунт створено!','ok');
+    document.getElementById('btn-auth').style.display='none';document.getElementById('btn-register').style.display='none';document.getElementById('btn-logout').style.display='';
+    await loadMe();goPage('home')
+  }catch{setStatus('registerStatus','Помилка під час реєстрації','error')}
+}
+
+function logout(){
+  localStorage.removeItem('token');currentUser=null;userFavorites=[];userAchievements=[];userWantToReads=[];userReadingProgress={};
+  document.getElementById('btn-auth').style.display='';document.getElementById('btn-register').style.display='';document.getElementById('btn-logout').style.display='none';
+  document.getElementById('sidebarUserSection').style.display='none';document.getElementById('sidebarAdminSection').style.display='none';document.getElementById('sidebarProfileSection').style.display='none';
+  toast('Ви вийшли з системи','ok');goPage('home')
+}
+
+async function loadMe(){
+  const token=getToken();if(!token)return;
+  try{
+    const res=await fetch('/api/v1/users/me',{headers:{'Authorization':'Bearer '+token}});const data=await res.json();if(!res.ok)return;
+    currentUser=data;userFavorites=data.favorites||[];userAchievements=data.achievements||[];
+    document.getElementById('btn-auth').style.display='none';document.getElementById('btn-register').style.display='none';document.getElementById('btn-logout').style.display='';
+    document.getElementById('sidebarUserSection').style.display='';document.getElementById('sidebarProfileSection').style.display='';document.getElementById('sidebarUserName').textContent=currentUser.name||'...';
+    if(currentUser.role==='admin'||currentUser.role==='manager')document.getElementById('sidebarAdminSection').style.display='';
+    loadFavoriteStatuses();loadWantToReadStatuses();loadReadingProgressStatuses();loadAchievements()
+  }catch{}
+}
+
+async function loadAchievements(){if(userAchievements.length)return;try{const res=await fetch('/api/v1/gamification/achievements',{headers:{'Authorization':'Bearer '+getToken()}});if(res.ok)userAchievements=await res.json()}catch{}}
+
+async function loadBooks(search='',genreId='',sortBy='',sortOrder='asc',page=catalogPage){
+  const grid=document.getElementById('catalog-books');
+  const skel=document.getElementById('catalogSkeleton');
+  if(skel)skel.style.display='grid';
+  try{
+    const ps=12,p=new URLSearchParams();if(search)p.set('search',search);if(genreId)p.set('genreId',genreId);if(sortBy)p.set('sortBy',sortBy);if(sortOrder)p.set('sortOrder',sortOrder);p.set('page',String(page));p.set('pageSize',String(ps));
+    const qs=p.toString(),res=await fetch('/api/v1/books'+(qs?'?'+qs:'')),data=await res.json(),books=data.items||data;
+    allBooks=books;if(page===1&&!search&&!genreId)recentBooks=books;
+    if(page===1){document.getElementById('hero-books')&&(document.getElementById('hero-books').textContent=data.totalCount||books.length);document.getElementById('hero-genres')&&(document.getElementById('hero-genres').textContent=new Set(books.map(b=>b.genreId).filter(Boolean)).size);const ar=books.filter(b=>b.rating).reduce((s,b)=>s+b.rating,0)/books.filter(b=>b.rating).length;document.getElementById('hero-rating')&&(document.getElementById('hero-rating').textContent=ar?ar.toFixed(1):'—');document.getElementById('sidebarBookCount')&&(document.getElementById('sidebarBookCount').textContent=data.totalCount||books.length)}
+    const ap=document.querySelector('.page.active');
+    if(ap&&ap.id==='page-home'){renderBooks(books,'catalog-books');renderPagination(data.totalCount||books.length,page,ps);renderContinueReadingSection()}
+  }catch{if(grid)grid.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>Помилка завантаження</p></div>'}
+}
+
+function renderBooks(books,cid){
+  const c=document.getElementById(cid);if(!c)return;
+  const skel=document.getElementById('catalogSkeleton');if(skel)skel.remove();
+  if(!books.length){c.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>Книг поки немає</p></div>';return}
+  c.innerHTML=books.map((book,i)=>{
+    const isFav=userFavorites.some(f=>f.id===book.id),favIcon=isFav?'♥':'♡',favClass=isFav?'btn-favorite active':'btn-favorite';
+    const isAdmin=currentUser&&(currentUser.role==='admin'||currentUser.role==='manager');
+    const genre=allGenres.find(g=>g.id===book.genreId);
+    const isWanted=userWantToReads.includes(book.id);
+    const progress=userReadingProgress[book.id];
+    let sb='';if(progress){if(progress.status==='finished'||progress.progressPercent>=100)sb='<span class="tag tag-green" style="margin-left:6px">✓</span>';else if(progress.status==='dropped')sb='<span class="tag tag-red" style="margin-left:6px">🗑</span>';else sb='<span class="tag tag-blue" style="margin-left:6px">📖</span>'}
+    const pb=progress?'<div class="book-progress"><div class="book-progress-fill" style="width:'+progress.progressPercent+'%;background:'+(progress.progressPercent>=100?'var(--green)':'var(--accent)')+'"></div></div>':'<div class="book-progress" style="opacity:0;height:4px"></div>';
+    const backContent=book.description?'<div class="cover-back-desc">'+book.description+'</div>':'<div class="cover-back-empty">Опис відсутній</div>';const backRating=book.rating?'<div class="cover-back-rating">★ '+Number(book.rating).toFixed(1)+'</div>':'<div class="cover-back-rating" style="color:var(--text3)">—</div>';
+    return '<div class="book-card" onclick="openBookDetail(\''+book.id+'\')"><div class="book-cover"><div class="cover-front">'+coverImg(book)+'</div><div class="cover-back">'+backRating+backContent+'</div></div><div class="book-meta">'+(genre?'<span class="bcg">'+genre.name+'</span>':'')+'<div class="bct">'+book.title+'</div><div class="bca">'+book.author+'</div><div class="bcr"><span class="rating"><i class="ti ti-star"></i> '+(book.rating?Number(book.rating).toFixed(1):'—')+'</span><span class="reviews-count"><i class="ti ti-message"></i> '+(book.reviewCount||0)+'</span>'+(book.pages?'<span class="pages">'+book.pages+' стор.</span>':'')+sb+'</div></div>'+pb+'<div class="book-actions"><button class="btn" onclick="event.stopPropagation();readBook(\''+book.id+'\')">Читати</button><button class="'+favClass+'" onclick="event.stopPropagation();toggleFavorite(\''+book.id+'\',this)">'+favIcon+'</button>'+(progress?'':'<button class="btn-want'+(isWanted?' active':'')+'" data-book-id="'+book.id+'" onclick="event.stopPropagation();toggleWantToRead(\''+book.id+'\',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>')+(isAdmin?'<button class="btn" onclick="event.stopPropagation();fillBookForm(\''+book.id+'\')">✎</button>':'')+(isAdmin?'<button class="btn" style="border-color:var(--red-dim);color:var(--red)" onclick="event.stopPropagation();deleteBook(\''+book.id+'\')">✕</button>':'')+'</div></div>'
+  }).join('')
+}
+
+function renderPagination(tc,cp,ps){
+  const tp=Math.ceil(tc/ps);const ce=document.getElementById('catalogCount');if(ce)ce.textContent='Знайдено '+tc+' книг';
+  ['catalogPagination','catalogPaginationBottom'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;if(tp<=1){el.innerHTML='';return}
+    let h='<button onclick="goToCatalogPage('+(cp-1)+')" '+(cp<=1?'disabled':'')+'>‹</button>';
+    for(let p=1;p<=tp;p++){if(p===cp)h+='<button class="active">'+p+'</button>';else if(p===1||p===tp||Math.abs(p-cp)<=1)h+='<button onclick="goToCatalogPage('+p+')">'+p+'</button>';else if(Math.abs(p-cp)===2)h+='<button disabled>…</button>'}
+    h+='<button onclick="goToCatalogPage('+(cp+1)+')" '+(cp>=tp?'disabled':'')+'>›</button>';el.innerHTML=h
+  })
+}
+
+function goToCatalogPage(page){catalogPage=page;const s=document.getElementById('catalogSearchInput')?.value?.trim()||'',g=document.getElementById('genreFilter')?.value||'',sv=document.getElementById('sortSelect')?.value||'title:asc',[sb,so]=sv.split(':');loadBooks(s,g,sb,so,page)}
+
+function applyFilters(){catalogPage=1;const s=document.getElementById('catalogSearchInput')?.value?.trim()||'',g=document.getElementById('genreFilter')?.value||'',sv=document.getElementById('sortSelect')?.value||'title:asc',[sb,so]=sv.split(':');loadBooks(s,g,sb,so,1)}
+function debounce(fn,wait){let t;return function(){if(t)clearTimeout(t);t=setTimeout(fn,wait)}}
+const debouncedSearch=debounce(applyFilters,400);
+function topbarSearch(){const v=document.getElementById('searchInput').value,ci=document.getElementById('catalogSearchInput');if(ci)ci.value=v;applyFilters();goPage('home')}
+
+function openBookDetail(id){
+  const book=allBooks.find(b=>b.id===id);if(!book)return;
+  const clr=COVERS[id.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%COVERS.length],genre=allGenres.find(g=>g.id===book.genreId),p=userReadingProgress[book.id]||null,hp=!!p,fin=hp&&p.status==='finished',rd=hp&&p.status==='reading',dp=hp&&p.status==='dropped';
+  const rat=book.rating?Number(book.rating).toFixed(1):null;
+  const imgUrl=book.imageUrl||(book.isbn?'https://covers.openlibrary.org/b/isbn/'+book.isbn+'-L.jpg':null);
+  const coverHtml=imgUrl?'<img src="'+imgUrl+'" alt="" onerror="this.outerHTML=\'<div class=placeholder style=background:linear-gradient(135deg,'+clr[0]+','+clr[1]+')>'+book.title.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()+'</div>\'">':'<div class="placeholder" style="background:linear-gradient(135deg,'+clr[0]+','+clr[1]+')">'+book.title.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()+'</div>';
+  let st='';if(fin)st='<span class="tag tag-green" style="padding:2px 10px;font-size:11px">✓ Прочитано</span>';else if(rd)st='<span class="tag tag-blue" style="padding:2px 10px;font-size:11px">📖 Читаю</span>';else if(dp)st='<span class="tag tag-red" style="padding:2px 10px;font-size:11px">🗑 Закинув</span>';
+  document.getElementById('modalBookDetail').innerHTML=
+    '<div class="modal-scroll">'+
+      '<div class="modal-top"><div class="modal-cover">'+coverHtml+'</div><div class="modal-info"><h2>'+book.title+'</h2><div class="sub">'+book.author+'</div><div class="tags">'+(genre?'<span class="accent">'+genre.name+'</span>':'')+(book.pages?'<span>📄 '+book.pages+' стор.</span>':'')+st+'</div>'+(rat?'<div class="rt"><span class="star">★</span> '+rat+'</div>':'')+'</div></div>'+
+      (book.quote?'<div class="modal-body-inner"><div class="qt">"'+book.quote+'"</div></div>':'')+
+      (book.description?'<div class="modal-body-inner">'+book.description+'</div>':'')+
+      (hp?'<div class="modal-strip">'+(fin?'<span class="btn-success btn" style="padding:5px 14px;font-size:12px;cursor:default">✓ Прочитано</span>':'')+(rd?'<span class="btn-filled btn" style="padding:5px 14px;font-size:12px;cursor:default">📖 Читаю</span> <span class="btn" style="padding:5px 14px;font-size:12px;border-color:var(--red-dim);color:var(--red);cursor:pointer" onclick="event.stopPropagation();setReadingStatus(\''+id+'\',\'dropped\')">Закинути</span>':'')+(dp?'<span class="btn" style="padding:5px 14px;font-size:12px;border-color:var(--red-dim);color:var(--red);cursor:default">🗑 Закинув</span> <span class="btn" style="padding:5px 14px;font-size:12px;cursor:pointer" onclick="event.stopPropagation();setReadingStatus(\''+id+'\',\'reading\')">Читати далі</span>':'')+'</div>':'')+
+      '<div class="modal-strip"><button class="btn btn-filled" onclick="closeBookModal();readBook(\''+id+'\')">📖 Читати</button><button class="btn" onclick="toggleBookChat(\''+id+'\')">💬 Запитати</button></div>'+
+      '<div id="bookChatContainer" style="display:none;margin-bottom:16px;padding:14px;background:var(--bg3);border-radius:var(--radius);border:0.5px solid var(--border2)"><div id="bookChatMessages" style="max-height:200px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:6px"></div><div style="display:flex;gap:6px"><input id="bookChatInput" type="text" placeholder="Запитай про книгу..." style="flex:1;padding:8px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);font-size:13px;outline:none" onkeydown="if(event.key===\'Enter\')sendBookChat(\''+id+'\')"><button class="btn btn-filled" style="padding:8px 14px" onclick="sendBookChat(\''+id+'\')">→</button></div></div>'+
+      '<div class="modal-section">📝 Відгуки читачів</div><div id="reviewsList" style="margin-bottom:12px">Завантаження…</div>'+
+      '<div id="reviewFormContainer"></div>'+
+    '</div>';
+  document.getElementById('bookModal').classList.add('open');loadReviews(id);renderReviewForm(id,hp,fin)
+}
+
+function closeBookModal(){document.getElementById('bookModal').classList.remove('open')}
+
+async function setReadingStatus(bid,st){
+  const token=getToken();if(!token)return;const p=userReadingProgress[bid];if(!p)return;
+  try{const res=await fetch('/api/v1/reading-progress',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({bookId:bid,currentPage:p.currentPage,totalPages:p.totalPages,status:st})});if(res.ok){const u=await res.json();userReadingProgress[bid]=u;renderBooks(allBooks,'catalog-books');renderContinueReading();openBookDetail(bid)}}catch{}
+}
+
+function toggleBookChat(id){const c=document.getElementById('bookChatContainer');if(!c)return;if(c.style.display==='none'){c.style.display='block';document.getElementById('bookChatInput').focus()}else{c.style.display='none'}}
+
+async function sendBookChat(bid){
+  const c=document.getElementById('bookChatInput'),msgs=document.getElementById('bookChatMessages');
+  if(!c||!msgs||!c.value.trim())return;
+  const q=c.value.trim();c.value='';
+  msgs.innerHTML+='<div style="align-self:flex-end;background:var(--accent-dim);color:var(--text);padding:8px 12px;border-radius:12px 12px 4px 12px;font-size:13px;max-width:80%">'+escapeHtml(q)+'</div>';
+  const aiBubble=document.createElement('div');
+  aiBubble.style.cssText='align-self:flex-start;background:var(--bg2);color:var(--text);padding:8px 12px;border-radius:12px 12px 12px 4px;font-size:13px;max-width:80%';
+  msgs.appendChild(aiBubble);
+  msgs.scrollTop=msgs.scrollHeight;
+  const token=getToken();
+  try{
+    const res=await fetch('/api/v1/books/'+bid+'/chat/stream',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({question:q})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let buffer='',done=false,errorMsg=null;
+    while(!done){
+      const {value,done:d}=await reader.read();done=d;
+      if(value)buffer+=decoder.decode(value,{stream:!done});
+      let idx;
+      while((idx=buffer.indexOf('\n\n'))!==-1){
+        const msg=buffer.slice(0,idx);buffer=buffer.slice(idx+2);
+        if(!msg.startsWith('data: '))continue;
+        const data=msg.slice(6);
+        if(data==='[DONE]'){done=true;break}
+        try{
+          const parsed=JSON.parse(data);
+          if(parsed.error){errorMsg=parsed.error;done=true;break}
+          if(parsed.text){aiBubble.textContent+=parsed.text;msgs.scrollTop=msgs.scrollHeight}
+        }catch{}
+      }
+    }
+    if(errorMsg){aiBubble.remove();msgs.innerHTML+='<div style="align-self:flex-start;color:var(--red);font-size:13px;padding:6px 0">⚠️ '+escapeHtml(errorMsg)+'</div>'}
+  }catch{aiBubble.remove();msgs.innerHTML+='<div style="align-self:flex-start;color:var(--red);font-size:13px;padding:6px 0">⚠️ Помилка з\'єднання</div>'}
+  msgs.scrollTop=msgs.scrollHeight
+}
+
+function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+async function loadReviews(bid){
+  try{const res=await fetch('/api/v1/books/'+bid+'/reviews');if(!res.ok){document.getElementById('reviewsList').innerHTML='<p style="color:var(--text3);font-size:.85rem">Помилка</p>';return}
+  const reviews=await res.json(),list=document.getElementById('reviewsList');if(!reviews.length){list.innerHTML='<p style="color:var(--text3);font-size:.85rem">Ще немає відгуків</p>';return}
+  const mod=currentUser&&(currentUser.role==='admin'||currentUser.role==='manager');
+  list.innerHTML=reviews.map(r=>{const st='★'.repeat(r.rating)+'☆'.repeat(5-r.rating),d=new Date(r.createdAt).toLocaleDateString('uk-UA');return '<div class="review-item"><div class="review-header"><span class="review-author">'+r.userName+'</span><span class="review-stars">'+st+'</span></div><div class="review-date">'+d+'</div>'+(r.text?'<div class="review-text">'+r.text+'</div>':'')+(mod&&currentUser.id!==r.userId?'<button class="review-delete" onclick="deleteReviewById(\''+r.id+'\',\''+bid+'\')">✕</button>':'')+'</div>'}).join('')
+  }catch{document.getElementById('reviewsList').innerHTML='<p style="color:var(--text3);font-size:.85rem">Помилка</p>'}
+}
+
+function renderReviewForm(bid,hp,fin){
+  const c=document.getElementById('reviewFormContainer'),t=getToken();if(!t){c.innerHTML='';return}
+  if(!hp){c.innerHTML='<p style="font-size:.85rem;color:var(--text3)">📖 Спочатку <a href="#" onclick="event.preventDefault();closeBookModal();readBook(\''+bid+'\')" style="color:var(--accent)">прочитайте книгу</a>, щоб залишити відгук</p>';return}
+  c.innerHTML='<strong style="font-size:.85rem">Ваш відгук</strong><div style="display:flex;gap:6px;margin:8px 0"><select id="reviewRating" style="flex:0 0 60px;padding:6px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px">'+[1,2,3,4,5].map(r=>'<option value="'+r+'">'+r+'★</option>').join('')+'</select><input id="reviewText" type="text" placeholder="Ваш відгук (необов\'язково)" style="flex:1;padding:6px 10px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;outline:none"></div><button class="btn btn-filled" onclick="saveReview(\''+bid+'\')">✎ Залишити відгук</button><div id="reviewStatus" class="status-msg"></div>'
+}
+
+async function saveReview(bid){clearStatus('reviewStatus');const token=getToken(),rating=parseInt(document.getElementById('reviewRating').value),text=document.getElementById('reviewText').value.trim();try{const res=await fetch('/api/v1/books/'+bid+'/reviews',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({rating,text})});const data=await res.json();if(!res.ok){setStatus('reviewStatus',formatApiErrors(data),'error');return}toast('Відгук збережено!','ok');loadReviews(bid);renderUserReviews();document.getElementById('reviewText').value=''}catch{setStatus('reviewStatus','Помилка','error')}}
+
+async function deleteReviewById(rid,bid){showConfirm('Видалити цей відгук?',async()=>{const token=getToken();const res=await fetch('/api/v1/books/'+bid+'/reviews/'+rid,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});if(res.ok){toast('Відгук видалено','ok');loadReviews(bid)}else toast('Помилка','err')})}
+
+async function toggleFavorite(bid,btn){const token=getToken();if(!token){toast('Увійдіть у систему','err');return}const isFav=userFavorites.some(f=>f.id===bid);try{const m=isFav?'DELETE':'POST',res=await fetch('/api/v1/favorites/'+bid,{method:m,headers:{'Authorization':'Bearer '+token}});if(!res.ok){toast('Помилка','err');return}if(isFav){userFavorites=userFavorites.filter(f=>f.id!==bid);btn.classList.remove('active');btn.textContent='♡'}else{userFavorites.push({id:bid});btn.classList.add('active');btn.textContent='♥'}renderFavorites()}catch{toast('Помилка','err')}}
+
+function loadFavoriteStatuses(){document.querySelectorAll('.btn-favorite[data-book-id]').forEach(btn=>{const bid=btn.dataset.bookId;if(userFavorites.some(f=>f.id===bid)){btn.classList.add('active');btn.textContent='♥'}else{btn.classList.remove('active');btn.textContent='♡'}})}
+function clearAllFavoriteButtons(){document.querySelectorAll('.btn-favorite[data-book-id]').forEach(btn=>{btn.classList.remove('active');btn.textContent='♡'})}
+
+async function renderFavorites(){const c=document.getElementById('favoriteBooks'),t=getToken();if(!currentUser){if(c)c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}try{const res=await fetch('/api/v1/favorites',{headers:{'Authorization':'Bearer '+t}});if(!res.ok){c.innerHTML='<div class="empty"><p>Помилка</p></div>';return}const books=await res.json();if(!books.length){c.innerHTML='<div class="empty"><p>Немає улюблених книг</p></div>';return}
+  const favCov=['#7c3a5c','#5a2a6a','#8a4a3a','#6a3a5a','#9a3a4a','#4a3a7a'];
+  c.className='favorites-grid';
+  c.innerHTML=books.map(b=>{
+    const bg=favCov[Math.floor(Math.random()*favCov.length)],gn=allGenres.find(g=>g.id===b.genreId);
+    const desc=b.description&&b.description.length>100?b.description.slice(0,100)+'…':b.description||'';return '<div class="fav-card" onclick="readBook(\''+b.id+'\')"><div class="fav-cover" style="background:'+bg+'">'+coverImg(b)+'<span class="fav-heart">♥</span></div><div class="fav-body"><div class="reading-body-title">'+b.title+'</div><div class="reading-body-author">'+b.author+'</div>'+(b.quote?'<div class="fav-quote">"'+b.quote+'"</div>':'')+(desc?'<div class="fav-desc">'+desc+'</div>':'')+'<div class="fav-stats">'+(b.rating?'<div class="fav-stat">★ '+Number(b.rating).toFixed(1)+'</div>':'')+(b.pages?'<div class="fav-stat">📄 '+b.pages+' стор.</div>':'')+(gn?'<div class="fav-stat" style="color:var(--accent-dim)">'+gn.name+'</div>':'')+'</div><div class="fav-footer"><span class="fav-added">❤️ Улюблена</span><button class="btn btn-filled" onclick="event.stopPropagation();readBook(\''+b.id+'\')">Читати →</button></div></div></div>'
+  }).join('')}catch{c.innerHTML='<div class="empty"><p>Помилка</p></div>'}}
+
+async function toggleWantToRead(bid,btn){const token=getToken();if(!token){toast('Увійдіть у систему','err');return}try{const res=await fetch('/api/v1/want-to-read/'+bid,{method:'POST',headers:{'Authorization':'Bearer '+token}});const data=await res.json();if(!res.ok){toast('Помилка','err');return}if(data.isWanted){userWantToReads.push(bid);btn.classList.add('active')}else{userWantToReads=userWantToReads.filter(id=>id!==bid);btn.classList.remove('active')}}catch{toast('Помилка','err')}}
+
+async function loadWantToReadStatuses(){const token=getToken();if(!token)return;try{const res=await fetch('/api/v1/want-to-read',{headers:{'Authorization':'Bearer '+token}});if(res.ok){const books=await res.json();userWantToReads=books.map(b=>b.id);document.querySelectorAll('.btn-want').forEach(btn=>{const bid=btn.dataset.bookId;if(userWantToReads.includes(bid))btn.classList.add('active');else btn.classList.remove('active')})}}catch{}}
+
+async function loadReadingProgressStatuses(){const token=getToken();if(!token)return;try{const res=await fetch('/api/v1/reading-progress/my',{headers:{'Authorization':'Bearer '+token}});if(res.ok){const list=await res.json();list.forEach(p=>{userReadingProgress[p.bookId]=p});const ap=document.querySelector('.page.active');if(ap&&ap.id==='page-home'){renderBooks(allBooks,'catalog-books');renderContinueReadingSection()}}}catch{}}
+
+async function renderReadingProgress(status,elementId){
+  const c=document.getElementById(elementId||'readingProgressReading');if(!c)return;
+  if(!currentUser){c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}
+  try{const t=getToken(),res=await fetch('/api/v1/reading-progress/my',{headers:{'Authorization':'Bearer '+t}});if(!res.ok){c.innerHTML='<div class="empty"><p>Помилка завантаження</p></div>';return}let list=await res.json();if(status)list=list.filter(p=>p.status===status);const all=list.length;const totPages=list.reduce((s,p)=>s+(p.pages||p.totalPages||0),0);const readPages=list.reduce((s,p)=>s+Math.min(p.currentPage||0,p.pages||p.totalPages||0),0);const avgPc=all?Math.round(list.reduce((s,p)=>s+(p.progressPercent||0),0)/all):0;
+    const hdr=document.getElementById(elementId+'Header');if(hdr)hdr.innerHTML='<div class="reading-summary">'+all+' <strong>'+(status==='reading'?'в процесі':status==='finished'?'прочитано':'закинуто')+'</strong> · прочитано <strong>'+readPages+'</strong> стор.'+(status!=='finished'?' · середній прогрес <strong>'+avgPc+'%</strong>':'')+'</div>';
+  if(!all){const msgs={reading:'Немає книг, які читаєте зараз',finished:'Немає прочитаних книг',dropped:'Немає закинутих книг'};c.innerHTML='<div class="empty"><p>'+(msgs[status]||'Немає записів')+'</p></div>';return}
+  const cov=['#1a3a5c','#0d3d2e','#3d1a0a','#2a1a4a','#0d3d3d','#3a1a2a'];
+  const labels={reading:{icon:'📖',title:'Читаю зараз',btn:'Продовжити читання',cls:'reading-card'},finished:{icon:'✓',title:'Прочитано',btn:'Перечитати',cls:'finished-card'},dropped:{icon:'🗑',title:'Закинуто',btn:'Читати заново',cls:'dropped-card'}};
+  const lb=labels[status]||labels.reading;
+  c.className='reading-grid';
+  c.innerHTML=list.map(p=>{
+    const pc=p.progressPercent||0,pp=p.pages||p.totalPages||0,cp=p.currentPage||0;
+    const lr=p.lastReadAt?new Date(p.lastReadAt).toLocaleDateString('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+    const bg=cov[Math.floor(Math.random()*cov.length)];
+    const rb=allBooks.find(bb=>bb.id===p.bookId);const dp=Math.min(cp,pp);return '<div class="reading-card '+lb.cls+'"><div class="reading-cover" style="background:'+bg+'">'+coverImg(rb||p)+'</div><div class="reading-body"><div class="reading-body-title">'+p.bookTitle+'</div><div class="reading-body-author">'+p.bookAuthor+'</div><div class="reading-progress-line">'+(pc>0?'<span style="font-weight:600;color:var(--text)">'+pc+'%</span> — ':'')+'прочитано <span style="color:var(--text)">'+dp+'</span> з <span style="color:var(--text)">'+pp+'</span> сторінок</div><div class="reading-progress-bar"><div class="reading-progress-fill" style="width:'+pc+'%"></div></div><div class="reading-footer"><span class="reading-footer-date">🕐 '+lr+'</span><button class="btn btn-filled" onclick="event.stopPropagation();readBook(\''+p.bookId+'\')">'+lb.btn+' →</button></div></div></div>'
+  }).join('')}catch{c.innerHTML='<div class="empty"><p>Помилка завантаження</p></div>'}}
+
+function readBook(bid){window.open('/pdf-viewer.html?id='+bid,'_blank')}
+
+// ----------------------------------------
+// Friends
+// ----------------------------------------
+function friendColor(id){const h=id.split('').reduce((a,c)=>a+c.charCodeAt(0),0);const cols=['#1a3a5c','#0d3d2e','#5a3a1a','#3a1a4a','#1a3a3a','#4a1a2a','#2a4a1a','#4a2a3a'];return cols[h%cols.length]}
+
+async function renderFriends(){
+  const c=document.getElementById('friendsList');if(!c)return;
+  if(!currentUser){c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}
+  const skel=document.getElementById('friendsSkeleton');if(skel)skel.remove();
+  try{
+    const res=await fetch('/api/v1/friends',{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){c.innerHTML='<div class="empty"><p>Помилка завантаження</p></div>';return}
+    const list=await res.json();
+    if(!list.length){c.innerHTML='<div class="empty"><p>Ще немає друзів. Знайдіть користувача за іменем вище.</p></div>';return}
+    c.className='friend-grid';
+    c.innerHTML=list.map(f=>{
+      const bg=friendColor(f.friendUserId);
+      const inits=f.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return '<div class="friend-card" onclick="openFriendModal(\''+f.friendUserId+'\')"><div class="friend-avatar" style="background:'+bg+'">'+inits+'</div><div class="friend-body"><div class="friend-name">'+f.name+'</div>'+(f.equippedTitle?'<div class="friend-title">'+f.equippedTitle+'</div>':'')+'</div><button class="friend-remove" onclick="event.stopPropagation();removeFriend(\''+f.friendUserId+'\',\''+f.name.replace(/'/g,"\\'")+'\')" title="Видалити">✕</button></div>'
+    }).join('')
+  }catch{c.innerHTML='<div class="empty"><p>Помилка завантаження</p></div>'}
+}
+
+let _friendSearchTerm='',_friendSearchTimeout=null,_friendSelectedUserId=null,_friendSearchHighlight=0;
+function debouncedFriendSearch(){clearTimeout(_friendSearchTimeout);_friendSearchTimeout=setTimeout(doFriendSearch,200)}
+async function doFriendSearch(){
+  const inp=document.getElementById('friendSearchInput');const dd=document.getElementById('friendSuggestions');
+  const q=inp.value.trim();_friendSearchTerm=q;_friendSearchHighlight=0;
+  if(q.length<1){dd.style.display='none';document.getElementById('addFriendBtn').disabled=true;_friendSelectedUserId=null;return}
+  try{
+    const res=await fetch('/api/v1/friends/search?q='+encodeURIComponent(q),{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok)return;const list=await res.json();
+    if(!list.length){dd.innerHTML='<div class="autocomplete-empty">Нічого не знайдено</div>';dd.style.display='';return}
+    dd.innerHTML=list.map((u,i)=>{
+      const bg=friendColor(u.id);
+      const inits=u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return '<div class="autocomplete-item'+(i===_friendSearchHighlight?' highlighted':'')+'" onclick="friendSearchSelect(\''+u.id+'\')" data-id="'+u.id+'"><div class="autocomplete-item-avatar" style="background:'+bg+'">'+inits+'</div><div class="autocomplete-item-body"><div class="autocomplete-item-name">'+u.name+'</div>'+(u.equippedTitle?'<div class="autocomplete-item-title">'+u.equippedTitle+'</div>':'')+'</div></div>'
+    }).join('');
+    dd.style.display=''
+  }catch{}
+}
+function friendSearchSelect(userId){
+  const dd=document.getElementById('friendSuggestions');
+  if(userId===0){const h=dd.querySelector('.highlighted');if(h)userId=h.dataset.id}
+  if(!userId){dd.style.display='none';return}
+  _friendSelectedUserId=userId;dd.style.display='none';
+  const sel=dd.querySelector('[data-id="'+userId+'"]');
+  if(sel){const inp=document.getElementById('friendSearchInput');inp.value=sel.querySelector('.autocomplete-item-name').textContent}
+  document.getElementById('addFriendBtn').disabled=false
+}
+function friendSearchKeydown(e){
+  const dd=document.getElementById('friendSuggestions');
+  if(e.key==='ArrowDown'){e.preventDefault();const h=dd.querySelector('.highlighted');if(h){const n=h.nextElementSibling;if(n){h.classList.remove('highlighted');n.classList.add('highlighted')}}else{const f=dd.querySelector('.autocomplete-item');if(f)f.classList.add('highlighted')}}
+  if(e.key==='ArrowUp'){e.preventDefault();const h=dd.querySelector('.highlighted');if(h){const p=h.previousElementSibling;if(p){h.classList.remove('highlighted');p.classList.add('highlighted')}}}
+  if(e.key==='Enter'){e.preventDefault();const h=dd.querySelector('.highlighted');if(h){friendSearchSelect(h.dataset.id)}}
+  if(e.key==='Escape'){dd.style.display='none';document.getElementById('friendSearchInput').blur()}
+}
+document.addEventListener('click',function(e){const inp=document.getElementById('friendSearchInput');const dd=document.getElementById('friendSuggestions');if(inp&&dd&&e.target!==inp&&!dd.contains(e.target))dd.style.display='none'});
+
+async function sendFriendRequest(){
+  if(!_friendSelectedUserId){toast('Виберіть користувача зі списку','err');return}
+  try{
+    const res=await fetch('/api/v1/friends/request',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},body:JSON.stringify({userId:_friendSelectedUserId})});
+    const data=await res.json();
+    if(!res.ok){toast(data.message||'Помилка','err');return}
+    document.getElementById('friendSearchInput').value='';_friendSelectedUserId=null;document.getElementById('addFriendBtn').disabled=true;
+    toast('Заявку відправлено!','ok')
+  }catch{toast('Помилка','err')}
+}
+
+async function loadFriendRequests(){
+  const sec=document.getElementById('friendRequestsSection');
+  const incList=document.getElementById('friendRequestsList');
+  const sentList=document.getElementById('friendSentRequestsList');
+  const incCount=document.getElementById('incomingCount');
+  const sentCount=document.getElementById('sentCount');
+  if(!sec||!incList||!sentList)return;
+  try{
+    const t=getToken();
+    const [incRes,sentRes]=await Promise.all([
+      fetch('/api/v1/friends/requests',{headers:{'Authorization':'Bearer '+t}}),
+      fetch('/api/v1/friends/requests/sent',{headers:{'Authorization':'Bearer '+t}})
+    ]);
+    const incReqs=incRes.ok?await incRes.json():[];
+    const sentReqs=sentRes.ok?await sentRes.json():[];
+    if(incCount)incCount.textContent=incReqs.length;
+    if(sentCount)sentCount.textContent=sentReqs.length;
+    if(!incReqs.length&&!sentReqs.length){sec.style.display='none';return}
+    sec.style.display='';
+    incList.innerHTML=incReqs.length?incReqs.map(r=>{
+      const bg=friendColor(r.fromUserId);
+      const inits=r.fromName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const d=new Date(r.createdAt).toLocaleDateString('uk-UA',{day:'numeric',month:'short'});
+      return '<div class="request-card"><div class="request-card-avatar" style="background:'+bg+'">'+inits+'</div><div class="request-card-body"><div class="request-card-name">'+r.fromName+'</div>'+(r.fromTitle?'<div class="request-card-title">'+r.fromTitle+'</div>':'')+'<div class="request-card-meta" style="font-size:10px;color:var(--text3);margin-top:1px">'+d+'</div></div><div class="request-card-actions"><button class="btn-accept" onclick="acceptFriendRequest(\''+r.id+'\')">✓ Прийняти</button><button class="btn-reject" onclick="rejectFriendRequest(\''+r.id+'\')">✕</button></div></div>'
+    }).join(''):'<div class="empty" style="padding:8px 0">Немає вхідних заявок</div>';
+    sentList.innerHTML=sentReqs.length?sentReqs.map(r=>{
+      const bg=friendColor(r.fromUserId);
+      const inits=r.fromName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const d=new Date(r.createdAt).toLocaleDateString('uk-UA',{day:'numeric',month:'short'});
+      return '<div class="request-card"><div class="request-card-avatar" style="background:'+bg+'">'+inits+'</div><div class="request-card-body"><div class="request-card-name">'+r.fromName+'</div>'+(r.fromTitle?'<div class="request-card-title">'+r.fromTitle+'</div>':'')+'<div class="request-card-meta" style="font-size:10px;color:var(--text3);margin-top:1px">Очікує · '+d+'</div></div><div class="request-card-actions"><button class="btn-reject" onclick="cancelFriendRequest(\''+r.id+'\')">✕ Скасувати</button></div></div>'
+    }).join(''):'<div class="empty" style="padding:8px 0">Немає відправлених заявок</div>'
+  }catch{sec.style.display='none'}
+}
+
+async function acceptFriendRequest(requestId){
+  try{
+    const res=await fetch('/api/v1/friends/requests/'+requestId+'/accept',{method:'POST',headers:{'Authorization':'Bearer '+getToken()}});
+    const data=await res.json();
+    if(!res.ok){toast(data.message||'Помилка','err');return}
+    toast('Заявку прийнято!','ok');
+    loadFriendRequests();renderFriends()
+  }catch{toast('Помилка','err')}
+}
+
+async function rejectFriendRequest(requestId){
+  try{
+    const res=await fetch('/api/v1/friends/requests/'+requestId+'/reject',{method:'POST',headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){toast('Помилка','err');return}
+    toast('Заявку відхилено','ok');
+    loadFriendRequests()
+  }catch{toast('Помилка','err')}
+}
+
+async function cancelFriendRequest(requestId){
+  try{
+    const res=await fetch('/api/v1/friends/requests/'+requestId,{method:'DELETE',headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){toast('Помилка','err');return}
+    toast('Заявку скасовано','ok');
+    loadFriendRequests()
+  }catch{toast('Помилка','err')}
+}
+
+async function removeFriend(friendUserId,name){
+  showConfirm('Видалити '+name+' з друзів?',async()=>{
+    try{
+      const res=await fetch('/api/v1/friends/'+friendUserId,{method:'DELETE',headers:{'Authorization':'Bearer '+getToken()}});
+      if(!res.ok){toast('Помилка','err');return}
+      toast('Друга видалено','ok');
+      renderFriends()
+    }catch{toast('Помилка','err')}
+  })
+}
+
+async function openFriendModal(friendUserId){
+  const modal=document.getElementById('friendModal');const content=document.getElementById('friendModalContent');
+  if(!modal||!content)return;
+  modal.classList.add('open');content.innerHTML='<div class="empty"><p>Завантаження…</p></div>';
+  try{
+    const t=getToken();
+    const [profRes,favRes,readRes]=await Promise.all([
+      fetch('/api/v1/friends/'+friendUserId+'/profile',{headers:{'Authorization':'Bearer '+t}}),
+      fetch('/api/v1/friends/'+friendUserId+'/favorites',{headers:{'Authorization':'Bearer '+t}}),
+      fetch('/api/v1/friends/'+friendUserId+'/reading',{headers:{'Authorization':'Bearer '+t}})
+    ]);
+    if(!profRes.ok){content.innerHTML='<div class="empty"><p>Помилка</p></div>';return}
+    const prof=await profRes.json();
+    const favs=favRes.ok?await favRes.json():[];
+    const reading=readRes.ok?await readRes.json():[];
+    const bg=friendColor(friendUserId);
+    const inits=prof.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    let html='<div class="friend-profile-header"><div class="friend-profile-avatar" style="background:'+bg+'">'+inits+'</div><div class="friend-profile-info"><div class="friend-profile-name">'+prof.name+'</div>'+(prof.equippedTitle?'<div class="friend-profile-title">'+prof.equippedTitle+'</div>':'')+'<div class="friend-profile-stats"><div class="friend-profile-stat"><div class="friend-profile-stat-value">'+prof.finishedBooks+'</div><div class="friend-profile-stat-label">прочитано</div></div><div class="friend-profile-stat"><div class="friend-profile-stat-value">'+prof.totalPages+'</div><div class="friend-profile-stat-label">сторінок</div></div><div class="friend-profile-stat"><div class="friend-profile-stat-value">'+prof.readingNow+'</div><div class="friend-profile-stat-label">читає</div></div></div></div></div>';
+    if(reading.length){
+      html+='<div class="friend-subsection-title"><i class="ti ti-book-open"></i> Читає зараз</div><div class="friend-books">';
+      reading.forEach(b=>{
+        const pc=b.progressPercent||0;
+        html+='<div class="friend-book-card" onclick="readBook(\''+b.bookId+'\')" style="cursor:pointer"><div class="friend-book-cover" style="background:var(--bg3)">'+coverImg(b)+'</div><div class="friend-book-info"><div class="friend-book-title">'+b.bookTitle+'</div><div class="friend-book-author">'+b.bookAuthor+'</div></div><div class="friend-book-meta">'+pc+'%</div></div>'
+      });
+      html+='</div>'
+    }
+    if(favs.length){
+      html+='<div class="friend-subsection-title"><i class="ti ti-heart"></i> Улюблені</div><div class="friend-books">';
+      favs.forEach(b=>{
+        html+='<div class="friend-book-card" onclick="readBook(\''+b.id+'\')" style="cursor:pointer"><div class="friend-book-cover" style="background:var(--bg3)">'+coverImg(b)+'</div><div class="friend-book-info"><div class="friend-book-title">'+b.title+'</div><div class="friend-book-author">'+b.author+'</div></div></div>'
+      });
+      html+='</div>'
+    }
+    if(!reading.length&&!favs.length)html+='<div class="empty"><p>Немає активності</p></div>';
+    content.innerHTML=html
+  }catch(e){content.innerHTML='<div class="empty"><p>Помилка завантаження</p></div>'}
+}
+function closeFriendModal(){document.getElementById('friendModal').classList.remove('open')}
+
+async function loadGenres(){try{const res=await fetch('/api/v1/genres');const genres=await res.json();allGenres=genres;const opts=genres.map(g=>'<option value="'+g.id+'">'+g.name+'</option>').join('');const bs=document.getElementById('bookGenreId');if(bs)bs.innerHTML='<option value="">— Без жанру —</option>'+opts;const gf=document.getElementById('genreFilter');if(gf)gf.innerHTML='<option value="">Усі жанри</option>'+opts;const sg=document.getElementById('sidebarGenres');if(sg)sg.innerHTML=genres.map(g=>'<div class="sidebar-item" onclick="filterByGenre(\''+g.id+'\')"><i class="ti ti-tag"></i> '+g.name+'</div>').join('')}catch{allGenres=[]}}
+
+function filterByGenre(gid){const el=document.getElementById('genreFilter');if(el)el.value=gid;applyFilters();goPage('home')}
+
+async function renderAchievements(){
+  const sE=document.getElementById('achSummary'),hE=document.getElementById('achHero'),gE=document.getElementById('achGrid');
+  if(!currentUser||!sE||!hE||!gE)return;
+  sE.innerHTML='<div class="ach-progress-bar"><div class="ach-progress-fill" id="achProgressFill" style="width:0%"></div></div><div class="ach-progress-info"><span id="achCount">завантаження…</span></div>';
+  hE.innerHTML='';gE.innerHTML='<div class="empty"><p>Завантаження…</p></div>';
+  if(!userAchievements.length){try{const res=await fetch('/api/v1/gamification/achievements',{headers:{'Authorization':'Bearer '+getToken()}});if(res.ok)userAchievements=await res.json()}catch{document.getElementById('achCount').textContent='—';return}}
+  const unlocked=userAchievements.filter(a=>a.isUnlocked),total=userAchievements.length,pct=total?Math.round(unlocked.length/total*100):0;
+  const ac=document.getElementById('achCount');if(ac)ac.innerHTML='Відкрито <strong>'+unlocked.length+'</strong> з <strong>'+total+'</strong> · <strong>'+pct+'%</strong>';
+  const pf=document.getElementById('achProgressFill');if(pf)pf.style.width=pct+'%';
+  const cols=['ach-gold','ach-blue','ach-green','ach-purple'];
+  const featured=[...unlocked,...userAchievements.filter(a=>!a.isUnlocked).sort((a,b)=>(b.progress/b.target)-(a.progress/a.target))].slice(0,3);
+  hE.innerHTML=featured.map(a=>{const cl=a.isUnlocked?'ach-h unlocked':'ach-h';return '<div class="'+cl+'"><div class="ach-h-icon '+cols[Math.floor(Math.random()*cols.length)]+'">'+(ACHIEVEMENT_ICONS[a.code]||'◆')+'</div><div class="ach-h-info"><div class="ach-h-title">'+a.title+'</div><div class="ach-h-desc">'+a.description+'</div></div>'+(a.isUnlocked?'<span class="ach-h-badge">✓</span>':'')+'</div>'}).join('');
+  gE.innerHTML=userAchievements.map(a=>{const ip=a.target?Math.round(Math.min(a.progress/a.target*100,100)):0,cl=a.isUnlocked?'ach-card unlocked':'ach-card';return '<div class="'+cl+'"><div class="ach-card-icon '+cols[Math.floor(Math.random()*cols.length)]+'">'+(ACHIEVEMENT_ICONS[a.code]||'◆')+'</div><div class="ach-card-body"><div class="ach-card-title">'+a.title+'</div><div class="ach-card-desc">'+a.description+'</div><div class="ach-card-progress"><div class="ach-card-bar"><div class="ach-card-fill" style="width:'+ip+'%"></div></div><span class="ach-card-pct">'+a.progress+'/'+a.target+'</span></div></div>'+(a.isUnlocked?'<span class="ach-card-check">✓</span>':'')+'</div>'}).join('')
+}
+
+function renderProfileData(){
+  if(!currentUser){const c=document.getElementById('profileData');if(c)c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}
+  const s=currentUser.stats||{},cd=new Date(currentUser.createdAt).toLocaleDateString('uk-UA',{year:'numeric',month:'long',day:'numeric'});
+  const inits=(currentUser.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('pAvatar').textContent=inits;
+  document.getElementById('pName').textContent=currentUser.name||'—';
+  document.getElementById('pEmail').textContent=currentUser.email||'—';
+  const pR=document.getElementById('pRole');
+  if(pR){
+    if(currentUser.role==='admin'||currentUser.role==='manager')pR.textContent='🔑 '+currentUser.role;
+    else pR.textContent=''
+  }
+  const tE=document.getElementById('pTitle');
+  if(tE){
+    const a=(currentUser.achievements||[]).find(a=>a.code===currentUser.equippedTitle);
+    tE.textContent=a?a.title:''
+  }
+  const stE=document.getElementById('profileStats');
+  if(stE)stE.innerHTML='<div class="profile-stat"><div class="profile-stat-value">'+(s.finishedBooks||0)+'</div><div class="profile-stat-label">Прочитано книг</div></div><div class="profile-stat"><div class="profile-stat-value">'+(s.totalPages||0)+'</div><div class="profile-stat-label">Прочитано стор.</div></div><div class="profile-stat"><div class="profile-stat-value">'+(s.reading||0)+'</div><div class="profile-stat-label">Читаю зараз</div></div><div class="profile-stat"><div class="profile-stat-value">'+(s.reviews||0)+'</div><div class="profile-stat-label">Відгуків</div></div><div class="profile-stat"><div class="profile-stat-value">'+(s.favoritesCount||0)+'</div><div class="profile-stat-label">В обраному</div></div><div class="profile-stat"><div class="profile-stat-value">'+s.achievementsUnlocked+'/'+s.achievementsTotal+'</div><div class="profile-stat-label">Досягнень</div></div>';
+  const c=document.getElementById('profileData');
+  const roleInfo=(currentUser.role==='admin'||currentUser.role==='manager')?'<div class="profile-data-item"><span class="profile-data-label">Роль</span><span class="profile-data-value">'+currentUser.role+'</span></div>':'';
+  if(c)c.innerHTML='<div class="profile-data-item"><span class="profile-data-label">Email</span><span class="profile-data-value">'+(currentUser.email||'—')+'</span></div>'+roleInfo+'<div class="profile-data-item"><span class="profile-data-label">Дата реєстрації</span><span class="profile-data-value">'+cd+'</span></div>';
+  renderTitleSelector();
+  renderActivityHeatmap();
+  renderRecentReads();
+  renderProfileAchievements()
+}
+
+function renderTitleSelector(){
+  const c=document.getElementById('profileTitleSelector');if(!c||!currentUser)return;
+  const achievements=currentUser.achievements||[];
+  const unlocked=achievements.filter(a=>a.isUnlocked);
+  let html='<div class="title-selector"><span class="title-chip none'+(currentUser.equippedTitle?'':' active')+'" onclick="selectTitle(\'\')">Без титулу</span>';
+  unlocked.forEach(a=>{
+    const active=currentUser.equippedTitle===a.code;
+    html+='<span class="title-chip'+(active?' active':'')+'" onclick="selectTitle(\''+a.code+'\')">'+a.title+'</span>'
+  });
+  html+='</div>';
+  c.innerHTML=html
+}
+
+async function selectTitle(code){
+  try{
+    const res=await fetch('/api/v1/users/me/title',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},body:JSON.stringify({title:code})});
+    if(!res.ok){toast('Помилка','err');return}
+    const data=await res.json();
+    currentUser.equippedTitle=data.equippedTitle;
+    renderProfileData();
+    toast('Титул оновлено','ok')
+  }catch{toast('Помилка','err')}
+}
+
+async function renderActivityHeatmap(){
+  const c=document.getElementById('profileHeatmap');if(!c)return;
+  if(!currentUser){c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}
+  try{
+    const res=await fetch('/api/v1/reading-progress/activity?weeks=12',{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){c.innerHTML='<div class="empty"><p>Немає даних</p></div>';return}
+    const data=await res.json();
+    if(!data.length){c.innerHTML='<div class="empty"><p>Ще немає активності</p></div>';return}
+    const maxP=Math.max(...data.map(d=>d.pages),1);
+    const level=d=>d.pages===0?0:Math.ceil(d.pages/maxP*5);
+    const today=new Date();today.setHours(0,0,0,0);
+    const start=new Date(today);start.setDate(start.getDate()-84);
+    start.setDate(start.getDate()-((start.getDay()+6)%7));
+    const days=[];const weeks=[];
+    for(let d=new Date(start),w=[];d<=today;d.setDate(d.getDate()+1)){
+      w.push(new Date(d));
+      if(w.length===7||d.getTime()===today.getTime()){weeks.push(w);w=[]}
+    }
+    const dayLabels=['Пн','','Ср','','Пт','',''];
+    const lookup={};data.forEach(d=>{lookup[new Date(d.date).toDateString()]=d.pages});
+    const activeDays=data.filter(d=>d.pages>0).length;
+    let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+    html+='<span style="font-size:13px;font-weight:500;color:var(--text2)">'+activeDays+' днів читання за 12 тижнів</span></div>';
+    const totalWeeks=weeks.length;
+    html+='<div class="heatmap-grid" style="grid-template-columns:30px repeat('+totalWeeks+',14px);grid-template-rows:14px repeat(7,14px)">';
+    let lastM='';
+    weeks.forEach((w,i)=>{
+      const d=w[0];let m='';
+      if(d){m=d.toLocaleDateString('uk-UA',{month:'short'});if(m===lastM)m='';else lastM=m}
+      html+='<div style="grid-column:'+(i+2)+';grid-row:1;font-size:9px;color:var(--text3)">'+m+'</div>'
+    });
+    dayLabels.forEach((l,i)=>{
+      html+='<div style="grid-column:1;grid-row:'+(i+2)+';font-size:9px;color:var(--text3);text-align:right;padding-right:4px;line-height:14px">'+l+'</div>'
+    });
+    weeks.forEach((w,ci)=>{
+      w.forEach((d,ri)=>{
+        const pgs=lookup[d.toDateString()]||0;
+        const lv=level({pages:pgs});
+        const tip=(pgs?pgs+' стор.':'Немає активності')+' — '+d.toLocaleDateString('uk-UA',{day:'numeric',month:'short'});
+        html+='<div class="cl'+(lv?' l'+lv:'')+'" style="grid-column:'+(ci+2)+';grid-row:'+(ri+2)+'"><span class="tip">'+tip+'</span></div>'
+      })
+    });
+    html+='</div>';
+    html+='<div class="heatmap-legend"><span>Менше</span><div class="cl"></div><div class="cl l1"></div><div class="cl l2"></div><div class="cl l3"></div><div class="cl l4"></div><div class="cl l5"></div><span>Більше</span></div>';
+    c.innerHTML=html
+  }catch(e){c.innerHTML='<div class="empty"><p>Помилка завантаження</p></div>'}
+}
+
+async function renderRecentReads(){
+  const c=document.getElementById('profileRecent');if(!c)return;
+  if(!currentUser){c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}
+  try{
+    const res=await fetch('/api/v1/reading-progress/recent?count=5',{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok||!res.ok){c.innerHTML='<div class="empty"><p>Немає даних</p></div>';return}
+    const data=await res.json();
+    if(!data.length){c.innerHTML='<div class="empty"><p>Ще немає прочитаних книг</p></div>';return}
+    const colors=['#1a3a5c','#0d3d2e','#3d1a0a','#2a1a4a','#0d3d3d','#3a1a2a'];
+    c.innerHTML=data.map((b,i)=>{
+      const bg=colors[i%colors.length],inits=(b.bookTitle||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const stars='★'.repeat(Math.round(b.bookRating||0))+'☆'.repeat(5-Math.round(b.bookRating||0));
+      const isbn=b.bookIsbn?b.bookIsbn.replace(/-/g,''):'';const imgUrl=b.bookImageUrl||(isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-M.jpg':'');
+      const img=imgUrl?'<img src="'+imgUrl+'" loading="lazy" alt="" onerror="this.style.display=\'none\'">':'';
+      return '<div class="recent-card" onclick="readBook(\''+b.bookId+'\')"><div class="recent-card-cover" style="background:'+bg+'">'+img+'<span style="position:relative;z-index:1">'+(img?'':inits)+'</span></div><div class="recent-card-body"><div class="recent-card-title">'+b.bookTitle+'</div><div class="recent-card-author">'+b.bookAuthor+'</div><div class="recent-card-stars">'+stars+'</div></div></div>'
+    }).join('')
+  }catch{c.innerHTML='<div class="empty"><p>Помилка</p></div>'}
+}
+
+async function renderProfileAchievements(){
+  const c=document.getElementById('profileAchievements');if(!c)return;
+  if(!currentUser){c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}
+  const achievements=currentUser.achievements||[];
+  if(!achievements.length){
+    if(!userAchievements.length){try{const res=await fetch('/api/v1/gamification/achievements',{headers:{'Authorization':'Bearer '+getToken()}});if(res.ok)userAchievements=await res.json()}catch{}}
+    const achs=userAchievements.length?userAchievements:achievements;
+    if(!achs.length){c.innerHTML='<div class="empty"><p>Немає даних</p></div>';return}
+    const cols=['ach-gold','ach-blue','ach-green','ach-purple'];
+    c.innerHTML=achs.map(a=>{
+      const pct=a.target?Math.round(Math.min(a.progress/a.target*100,100)):0;
+      const cl='ach-row'+(a.isUnlocked?' unlocked':'');
+      const ic=cols[Math.floor(Math.random()*cols.length)];
+      return '<div class="'+cl+'"><div class="ach-row-icon '+ic+'">'+(ACHIEVEMENT_ICONS[a.code]||'◆')+'</div><div class="ach-row-body"><div class="ach-row-title">'+a.title+'</div><div class="ach-row-desc">'+a.description+'</div><div class="ach-row-bar-wrap"><div class="ach-row-bar"><div class="ach-row-fill" style="width:'+pct+'%"></div></div><span class="ach-row-pct">'+a.progress+'/'+a.target+'</span></div></div></div>'
+    }).join('');
+    return
+  }
+  const cols=['ach-gold','ach-blue','ach-green','ach-purple'];
+  c.innerHTML=achievements.map(a=>{
+    const pct=a.target?Math.round(Math.min(a.progress/a.target*100,100)):0,cl='ach-row'+(a.isUnlocked?' unlocked':'');
+    return '<div class="'+cl+'"><div class="ach-row-icon '+cols[Math.floor(Math.random()*cols.length)]+'">'+(ACHIEVEMENT_ICONS[a.code]||'◆')+'</div><div class="ach-row-body"><div class="ach-row-title">'+a.title+'</div><div class="ach-row-desc">'+a.description+'</div><div class="ach-row-bar-wrap"><div class="ach-row-bar"><div class="ach-row-fill" style="width:'+pct+'%"></div></div><span class="ach-row-pct">'+a.progress+'/'+a.target+'</span></div></div></div>'
+  }).join('')
+}
+
+function deleteBook(bid){const b=allBooks.find(bb=>bb.id===bid);showConfirm('Видалити книгу "'+(b?b.title:'')+'"?',async()=>{const t=getToken();try{const res=await fetch('/api/v1/books/'+bid,{method:'DELETE',headers:{'Authorization':'Bearer '+t}});if(res.ok){toast('Книгу видалено','ok');loadBooks()}else{const d=await res.json();toast(formatApiErrors(d),'err')}}catch{toast('Помилка','err')}})}
+
+function fillBookForm(id){goPage('admin-books');const book=allBooks.find(b=>b.id===id);if(!book)return;document.getElementById('bookId').value=id;document.getElementById('bookTitle').value=book.title||'';document.getElementById('bookAuthor').value=book.author||'';document.getElementById('bookIsbn').value=book.isbn||'';if(book.genreId)document.getElementById('bookGenreId').value=book.genreId;document.getElementById('bookRating').value=book.rating||'';document.getElementById('bookPages').value=book.pages||'';document.getElementById('bookQuote').value=book.quote||'';document.getElementById('bookDescription').value=book.description||'';document.getElementById('bookImageUrl').value=book.imageUrl||'';document.getElementById('bookPdfUrl').value=book.pdfUrl||'';document.getElementById('bookGutenbergId').value=book.gutenbergId||'';document.getElementById('pdfUrlField').style.display=book.pdfUrl?'block':'none';document.getElementById('bookStatus').textContent=''}
+function clearBookForm(){['bookId','bookTitle','bookAuthor','bookIsbn','bookGenreId','bookRating','bookPages','bookQuote','bookDescription','bookImageUrl','bookPdfUrl','bookGutenbergId'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});document.getElementById('pdfUrlField').style.display='none';document.getElementById('bookStatus').textContent='';const fc=document.getElementById('fileChosen');if(fc)fc.textContent='Файл не вибрано'}
+
+async function createBook(){const t=getToken();clearStatus('bookStatus');const gid=document.getElementById('bookGutenbergId').value;const dto={title:document.getElementById('bookTitle').value.trim(),author:document.getElementById('bookAuthor').value.trim(),isbn:document.getElementById('bookIsbn').value.trim(),genreId:document.getElementById('bookGenreId').value||null,totalCopies:1,quote:document.getElementById('bookQuote').value.trim()||null,pages:parseInt(document.getElementById('bookPages').value)||null,description:document.getElementById('bookDescription').value.trim()||null,imageUrl:document.getElementById('bookImageUrl').value.trim()||null,gutenbergId:gid?parseInt(gid):null};try{const res=await fetch('/api/v1/books',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(dto)});const data=await res.json();if(!res.ok){setStatus('bookStatus',formatApiErrors(data),'error');return}toast('Книгу створено!','ok');const fi=document.getElementById('bookPdfFile');if(fi.files.length>0){const fd=new FormData();fd.append('pdf',fi.files[0]);await fetch('/api/v1/books/'+data.id+'/pdf',{method:'POST',headers:{'Authorization':'Bearer '+t},body:fd})}clearBookForm();await loadBooks()}catch{setStatus('bookStatus','Помилка','error')}}
+
+async function updateBook(){const t=getToken();clearStatus('bookStatus');const id=document.getElementById('bookId').value;if(!id){setStatus('bookStatus','Виберіть книгу через Редагувати','error');return}const gid=document.getElementById('bookGutenbergId').value;const dto={title:document.getElementById('bookTitle').value.trim(),author:document.getElementById('bookAuthor').value.trim(),isbn:document.getElementById('bookIsbn').value.trim(),genreId:document.getElementById('bookGenreId').value||null,totalCopies:1,availableCopies:1,rating:parseFloat(document.getElementById('bookRating').value)||null,quote:document.getElementById('bookQuote').value.trim()||null,pages:parseInt(document.getElementById('bookPages').value)||null,description:document.getElementById('bookDescription').value.trim()||null,imageUrl:document.getElementById('bookImageUrl').value.trim()||null,gutenbergId:gid?parseInt(gid):null,isActive:true};try{const res=await fetch('/api/v1/books/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(dto)});const data=await res.json();if(!res.ok){setStatus('bookStatus',formatApiErrors(data),'error');return}toast('Книгу оновлено!','ok');const fi=document.getElementById('bookPdfFile');if(fi.files.length>0){const fd=new FormData();fd.append('pdf',fi.files[0]);await fetch('/api/v1/books/'+id+'/pdf',{method:'POST',headers:{'Authorization':'Bearer '+t},body:fd})}clearBookForm();await loadBooks()}catch{setStatus('bookStatus','Помилка','error')}}
+
+async function renderUserManagement(){const c=document.getElementById('userList'),t=getToken(),isAd=currentUser&&currentUser.role==='admin';try{const res=await fetch('/api/v1/users',{headers:{'Authorization':'Bearer '+t}});if(!res.ok){c.innerHTML='<div class="empty"><p>Помилка</p></div>';return}const users=await res.json();c.innerHTML='<table class="user-table"><thead><tr><th>Ім\'я</th><th>Email</th><th>Роль</th><th>Статус</th><th></th></tr></thead><tbody>'+users.map(u=>{const isSelf=currentUser&&currentUser.id===u.id;return '<tr><td>'+u.name+'</td><td style="color:var(--text3)">'+u.email+'</td><td>'+(isAd&&!isSelf?'<select class="role-select" onchange="changeUserRole(\''+u.id+'\',this.value)">'+['customer','admin','manager','librarian'].map(r=>'<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>').join('')+'</select>':u.role)+'</td><td>'+(u.isActive?'<span class="tag tag-green">Активний</span>':'<span class="tag tag-red">Заблокований</span>')+'</td><td>'+(isSelf?'':'<button class="btn" style="border-color:var(--red-dim);color:var(--red)" onclick="toggleUserActive(\''+u.id+'\','+u.isActive+')">'+(u.isActive?'🔒':'🔓')+'</button>')+'</td></tr>'}).join('')+'</tbody></table>'}catch{c.innerHTML='<div class="empty"><p>Помилка</p></div>'}}
+
+async function changeUserRole(uid,rn){showConfirm('Змінити роль на "'+rn+'"?',async()=>{const t=getToken();try{const res=await fetch('/api/v1/users/'+uid+'/role',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({roleName:rn})});if(res.ok){toast('Роль змінено','ok');renderUserManagement()}else{const d=await res.json();toast(formatApiErrors(d),'err')}}catch{toast('Помилка','err')}})}
+
+async function toggleUserActive(uid,ia){showConfirm((ia?'Заблокувати':'Розблокувати')+' користувача?',async()=>{const t=getToken();try{const res=await fetch('/api/v1/users/'+uid+'/toggle-active',{method:'PUT',headers:{'Authorization':'Bearer '+t}});if(res.ok){toast(ia?'Заблоковано':'Розблоковано','ok');renderUserManagement()}else{const d=await res.json();toast(formatApiErrors(d),'err')}}catch{toast('Помилка','err')}})}
+
+async function renderUserReviews(){const c=document.getElementById('myReviews'),t=getToken();if(!currentUser){if(c)c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}try{const res=await fetch('/api/v1/reviews/my',{headers:{'Authorization':'Bearer '+t}});if(!res.ok){c.innerHTML='<div class="empty"><p>Помилка</p></div>';return}const ur=await res.json();if(!ur.length){c.innerHTML='<div class="empty"><p>Ще немає відгуків</p></div>';return}
+  c.className='reading-grid';
+  c.innerHTML=ur.map(r=>{
+    const rb=allBooks.find(bb=>bb.id===r.bookId),st='★'.repeat(r.rating)+'☆'.repeat(5-r.rating),d=new Date(r.createdAt).toLocaleDateString('uk-UA',{day:'numeric',month:'long',year:'numeric'}),bk=rb||r;
+    return '<div class="reading-card" style="cursor:default"><div class="reading-cover">'+coverImg(bk)+'</div><div class="reading-body"><div class="reading-body-title">'+(bk.title||bk.bookTitle||r.bookId)+'</div><div class="reading-body-stars">'+st+'</div><div class="reading-body-text">'+(r.text||'<span style="color:var(--text3);font-style:italic">Без тексту</span>')+'</div><div class="reading-footer"><span class="reading-footer-date">📅 '+d+'</span></div></div></div>'
+  }).join('')}catch{c.innerHTML='<div class="empty"><p>Помилка</p></div>'}}
+
+async function renderWantToRead(){const c=document.getElementById('wantToReadBooks'),t=getToken();if(!currentUser){if(c)c.innerHTML='<div class="empty"><p>Увійдіть у систему</p></div>';return}try{const res=await fetch('/api/v1/want-to-read',{headers:{'Authorization':'Bearer '+t}});if(!res.ok){c.innerHTML='<div class="empty"><p>Помилка</p></div>';return}const books=await res.json();if(!books.length){c.innerHTML='<div class="empty"><p>Список порожній</p></div>';return}
+  const covW=['#2a4a6a','#4a3a5a','#3a5a3a','#5a3a2a','#2a3a5a','#5a2a4a'];
+  c.className='reading-grid';
+  c.innerHTML=books.map(b=>{
+    const bg=covW[Math.floor(Math.random()*covW.length)],gn=allGenres.find(g=>g.id===b.genreId);
+    return '<div class="reading-card" onclick="readBook(\''+b.id+'\')"><div class="reading-cover" style="background:'+bg+'">'+coverImg(b)+'<span class="reading-cover-icon">🔖</span></div><div class="reading-body"><div class="reading-body-title">'+b.title+'</div><div class="reading-body-author">'+b.author+'</div>'+(b.quote?'<div class="reading-body-quote">"'+b.quote+'"</div>':'')+'<div class="reading-body-meta">'+(b.rating?'<span>★ '+Number(b.rating).toFixed(1)+'</span>':'')+(b.pages?'<span>📄 '+b.pages+' стор.</span>':'')+(gn?'<span style="color:var(--accent-dim)">'+gn.name+'</span>':'')+'</div><div class="reading-footer"><span class="reading-footer-label">🔖 Хоче прочитати</span><button class="btn btn-filled" onclick="event.stopPropagation();readBook(\''+b.id+'\')">Читати →</button></div></div></div>'
+  }).join('')}catch{c.innerHTML='<div class="empty"><p>Помилка</p></div>'}}
+
+document.getElementById('genreFilter')?.addEventListener('change',applyFilters);
+document.getElementById('sortSelect')?.addEventListener('change',applyFilters);
+document.getElementById('bookPdfFile')?.addEventListener('change',function(){const s=document.getElementById('fileChosen');if(s)s.textContent=this.files.length>0?this.files[0].name:'Файл не вибрано'});
+
+loadGenres().then(async()=>{await loadBooks();loadMe()});
+</script>
+</body>
+</html>

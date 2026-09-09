@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Reader - LibraFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Lora:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0f1e;
+            --surface: #111827;
+            --surface-elevated: #1a2236;
+            --border: #1e2d4a;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --blue: #60a5fa;
+            --blue-glow: rgba(96, 165, 250, 0.15);
+            --shadow: 0 1px 3px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.2);
+            --page-overlay-bg: rgba(17,24,39,.85);
+            --page-overlay-text: #94a3b8;
+            --canvas-bg: #fff;
+        }
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: 'Geist', sans-serif;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .back-btn:hover {
+            background: var(--surface-elevated);
+            border-color: var(--blue);
+            transform: translateX(-2px);
+        }
+
+        .back-btn:active {
+            transform: translateX(-2px) scale(0.98);
+        }
+
+        .save-progress-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--blue);
+            border: 1px solid var(--blue);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: 'Geist', sans-serif;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .save-progress-btn:hover {
+            background: #3b82f6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+        }
+
+        .save-progress-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .save-progress-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .controls-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .book-title {
+            font-family: 'Lora', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+            opacity: 0;
+            animation: fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .control-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.1rem;
+        }
+
+        .control-btn:hover {
+            background: var(--surface-elevated);
+            border-color: var(--blue);
+            color: var(--blue);
+            transform: translateY(-1px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            height: 36px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+            transition: border-color .2s;
+        }
+        .page-info:hover{border-color:var(--blue)}
+        .page-info #pageText{display:flex;align-items:center;gap:3px}
+        .page-info #pageDisplay{color:var(--text);font-weight:500;min-width:12px;text-align:center}
+        .page-info #pageCount{color:var(--text-muted)}
+
+        .page-input {
+            width: 48px;
+            background: transparent;
+            border: 1px solid var(--blue);
+            color: var(--text);
+            text-align: center;
+            font-family: 'Geist', sans-serif;
+            font-size: 0.875rem;
+            outline: none;
+            border-radius: 4px;
+            padding:2px 4px;
+            height:28px;
+        }
+        .page-input:focus{box-shadow:0 0 0 2px var(--blue-glow)}
+
+        .pdf-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1.5rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .pdf-container::before,
+        .pdf-container::after {
+            content: '';
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            width: 25%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .pdf-container::before {
+            left: 0;
+            background: linear-gradient(
+                to right,
+                var(--bg) 0%,
+                rgba(10, 15, 30, 0.8) 30%,
+                rgba(10, 15, 30, 0.4) 60%,
+                transparent 100%
+            );
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .pdf-container::after {
+            right: 0;
+            background: linear-gradient(
+                to left,
+                var(--bg) 0%,
+                rgba(10, 15, 30, 0.8) 30%,
+                rgba(10, 15, 30, 0.4) 60%,
+                transparent 100%
+            );
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .pdf-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .pdf-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .pdf-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .pdf-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        .pdf-canvas-wrapper {
+            opacity: 0;
+            transform: scale(0.98);
+            animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+        }
+        .pdf-container.fit-mode::before,
+        .pdf-container.fit-mode::after {
+            display: none;
+        }
+        .pdf-container.fit-mode {
+            overflow-x: visible;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.98) translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        #pdfCanvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            background: var(--canvas-bg);
+            transition: opacity .25s ease, max-width .3s ease;
+        }
+        #pdfCanvas.fade-out { opacity: 0; }
+        #pdfCanvas.fade-in { opacity: 1; }
+
+        .page-overlay {
+            position: fixed;
+            bottom: 1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--page-overlay-bg);
+            color: var(--page-overlay-text);
+            padding: .35rem .9rem;
+            border-radius: 20px;
+            font-size: .75rem;
+            font-weight: 500;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity .3s ease;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .page-overlay.show { opacity: 1; }
+
+        .reader-progress-bar {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--border);
+            z-index: 15;
+        }
+        .reader-progress-bar .fill {
+            height: 100%;
+            background: var(--blue);
+            width: 0%;
+            transition: width .3s ease;
+        }
+
+        .fit-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all .2s cubic-bezier(.4,0,.2,1);
+            font-size: .8rem;
+            font-weight: 600;
+        }
+        .fit-btn:hover {
+            background: var(--surface-elevated);
+            border-color: var(--blue);
+            color: var(--blue);
+            transform: translateY(-1px);
+        }
+        .fit-btn.active {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #fff;
+        }
+
+
+
+        .loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            background: var(--bg);
+            z-index: 5;
+        }
+
+        .loading.hidden {
+            animation: fadeOut 0.4s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--blue);
+            border-radius: 50%;
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+
+        .error-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .error-message {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            max-width: 400px;
+        }
+
+        .glow-effect {
+            position: fixed;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--blue-glow) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.6;
+            animation: pulse 4s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        .glow-effect-left {
+            position: fixed;
+            bottom: -100px;
+            left: -100px;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.5;
+            animation: pulse 5s ease-in-out infinite reverse;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .progress-toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .progress-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .progress-toast-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--blue-glow);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .progress-toast-content {
+            flex: 1;
+        }
+
+        .progress-toast-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-toast-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .chat-toggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--blue);
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(96,165,250,0.4);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .25s ease;
+        }
+        .chat-toggle:hover { transform: scale(1.08); }
+        .chat-toggle.active { transform: rotate(45deg); background: var(--surface-elevated); box-shadow: none; }
+
+        .chat-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 24px;
+            width: 360px;
+            max-height: 480px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+            z-index: 49;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: chatSlideIn .3s ease;
+        }
+        .chat-panel.open { display: flex; }
+        @keyframes chatSlideIn { from { opacity: 0; transform: translateY(20px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .chat-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface-elevated);
+        }
+        .chat-header span { flex: 1; }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 200px;
+        }
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .chat-msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .chat-msg.user {
+            align-self: flex-end;
+            background: var(--blue-glow);
+            color: var(--text);
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg.ai {
+            align-self: flex-start;
+            background: var(--surface-elevated);
+            color: var(--text-muted);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-msg.loading { align-self: flex-start; color: var(--text-muted); font-style: italic; font-size: 13px; padding: 8px 0; }
+
+        .chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+        }
+        .chat-suggestion {
+            padding: 5px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all .2s ease;
+            font-family: 'Geist', sans-serif;
+        }
+        .chat-suggestion:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: var(--blue-glow);
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px 14px;
+            border-top: 1px solid var(--border);
+        }
+        .chat-input-row input {
+            flex: 1;
+            padding: 9px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface-elevated);
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            font-family: 'Geist', sans-serif;
+            transition: border-color .2s;
+        }
+        .chat-input-row input:focus { border-color: var(--blue); }
+        .chat-input-row input::placeholder { color: var(--text-muted); }
+        .chat-input-row button {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: none;
+            background: var(--blue);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+            flex-shrink: 0;
+        }
+        .chat-input-row button:hover { background: #4a8ad4; }
+
+        .progress-toast-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .toast-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Geist', sans-serif;
+            border: none;
+        }
+
+        .toast-btn-primary {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .toast-btn-primary:hover {
+            background: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .toast-btn-secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .toast-btn-secondary:hover {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .text-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2.5rem 3rem;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            color: #d1d5db;
+            background: var(--surface);
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+            border-radius: 12px;
+            margin-top: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .text-container::-webkit-scrollbar { width: 8px; }
+        .text-container::-webkit-scrollbar-track { background: transparent; }
+        .text-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .text-container::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+        .text-container p { margin-bottom: 1.2rem; text-align: justify; }
+        .text-container .chapter { font-family: 'Lora', serif; font-size: 1.4rem; font-weight: 600; color: var(--text); margin: 2rem 0 1rem; text-align: center; }
+        .text-container .title-page { text-align: center; margin: 3rem 0; }
+        .text-container .title-page h1 { font-family: 'Lora', serif; font-size: 2rem; color: var(--text); margin-bottom: .5rem; }
+        .text-container .title-page h2 { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+        .text-loading {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            flex: 1; gap: 1.5rem; color: var(--text-muted); font-size: .875rem;
+        }
+
+        .progress-indicator {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+            opacity: 0;
+            animation: fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) 1s forwards;
+        }
+
+        .progress-bar {
+            width: 60px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--blue);
+            transition: width 0.3s ease;
+        }
+            .header {
+                padding: 0 1rem;
+            }
+
+            .book-title {
+                font-size: 0.875rem;
+            }
+
+            .pdf-container {
+                padding: 1rem;
+            }
+
+            .controls {
+                gap: 0.25rem;
+            }
+
+            .control-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+
+            .page-info {
+                font-size: 0.75rem;
+                padding: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-effect"></div>
+    <div class="glow-effect-left"></div>
+
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Назад
+        </button>
+        <h1 class="book-title" id="bookTitle">Завантаження...</h1>
+        <div class="controls" id="controlsBar">
+            <button class="control-btn" id="prevBtn" onclick="prevPage()" title="Попередня сторінка" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </button>
+            <div class="page-info" id="pageInfo">
+                <span id="pageText" onclick="showPageInput()"><span id="pageDisplay">1</span> / <span id="pageCount">-</span></span>
+                <input type="number" id="pageInput" class="page-input" value="1" min="1" style="display:none" onkeydown="if(event.key==='Enter'){goToPage();hidePageInput()}" onblur="hidePageInput()">
+            </div>
+            <button class="control-btn" id="nextBtn" onclick="nextPage()" title="Наступна сторінка" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </button>
+            <div class="controls-divider" id="controlsDivider1"></div>
+            <button class="control-btn" id="zoomOutBtn" onclick="zoomOut()" title="Зменшити">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+            </button>
+            <button class="control-btn" id="zoomInBtn" onclick="zoomIn()" title="Збільшити">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                    <line x1="11" y1="8" x2="11" y2="14"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+            </button>
+            <button class="fit-btn" id="fitWidthBtn" onclick="toggleFitMode()" title="За шириною">⇔</button>
+            <button class="control-btn" id="fontSizeDownBtn" onclick="fontSizeDown()" title="Зменшити шрифт" style="display:none">A−</button>
+            <button class="control-btn" id="fontSizeUpBtn" onclick="fontSizeUp()" title="Збільшити шрифт" style="display:none">A+</button>
+            <span class="page-info" id="fontSizeLabel" style="display:none;min-width:32px;justify-content:center;font-size:11px" id="fontSizeValue">100%</span>
+            <button class="save-progress-btn" onclick="saveProgressToServer()" id="saveProgressBtn" title="Зберегти прогрес читання">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Зберегти прогрес
+            </button>
+        </div>
+    </div>
+
+    <div class="pdf-container" id="pdfContainer">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">Завантаження...</div>
+        </div>
+        <div class="pdf-canvas-wrapper" id="canvasWrapper" style="display: none;">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+        <div class="text-container" id="textContainer" style="display: none;"></div>
+    </div>
+
+    <div class="progress-toast" id="progressToast">
+        <div class="progress-toast-icon">📖</div>
+        <div class="progress-toast-content">
+            <div class="progress-toast-title">Продовжити читання?</div>
+            <div class="progress-toast-text">Ви зупинилися на сторінці <span id="savedPage">-</span></div>
+        </div>
+        <div class="progress-toast-actions">
+            <button class="toast-btn toast-btn-primary" onclick="continuereading()">Продовжити</button>
+            <button class="toast-btn toast-btn-secondary" onclick="dismissToast()">Спочатку</button>
+        </div>
+    </div>
+
+    <div class="page-overlay" id="pageOverlay"></div>
+
+    <div class="reader-progress-bar"><div class="fill" id="readerProgressFill"></div></div>
+
+    <div class="progress-indicator" id="progressIndicator">
+        <span>Прогрес:</span>
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+        <span id="progressText">0%</span>
+    </div>
+
+    <button class="chat-toggle" id="chatToggle" onclick="toggleChat()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+    </button>
+
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.7">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            ШІ-помічник
+            <span></span>
+            <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px;display:flex" onclick="toggleChat()">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg ai">Привіт! Я ШІ-помічник. Можу відповісти на питання про цю книгу.</div>
+        </div>
+        <div class="chat-suggestions" id="chatSuggestions">
+            <button class="chat-suggestion" onclick="chatAsk('Про що ця книга?')">Про що книга?</button>
+            <button class="chat-suggestion" onclick="chatAsk('Хто автор?')">Хто автор?</button>
+            <button class="chat-suggestion" onclick="chatAsk('Хто головний герой?')">Головний герой</button>
+            <button class="chat-suggestion" onclick="chatAsk('Складність тексту?')">Складність</button>
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chatInput" placeholder="Запитай про книгу..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+            <button onclick="sendChatMsg()">→</button>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get('id');
+        const isTextMode = urlParams.get('mode') === 'text';
+
+        let pdfDoc = null;
+        let currentPage = 1;
+        let scale = 1.5;
+        let fitMode = null;
+        let isRendering = false;
+        let fontSize = 100;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const textContainer = document.getElementById('textContainer');
+
+        function fetchWithTimeout(url,ms){
+            const ctrl=new AbortController();const id=setTimeout(()=>ctrl.abort(),ms);
+            return fetch(url,{signal:ctrl.signal}).finally(()=>clearTimeout(id))
+        }
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        }
+
+        async function loadPdf() {
+            if (!bookId) {
+                showError('ID книги не вказано', 'Поверніться на головну сторінку та оберіть книгу');
+                return;
+            }
+
+            try {
+                // Завантажити інформацію про книгу
+                const bookResponse = await fetch(`/api/v1/books/${bookId}`);
+                if (!bookResponse.ok) {
+                    throw new Error('Книгу не знайдено');
+                }
+
+                const book = await bookResponse.json();
+                document.getElementById('bookTitle').textContent = book.title || 'PDF Reader';
+                document.title = `${book.title} - LibraFlow`;
+
+                if (!book.pdfUrl) {
+                    showError('Немає контенту', 'Для цієї книги не завантажено файл. Якщо ви адміністратор, завантажте PDF через форму редагування книги.');
+                    return;
+                }
+
+                // Завантажити PDF
+                const pdfUrl = `/api/v1/books/${bookId}/pdf`;
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+
+                pdfDoc = await loadingTask.promise;
+                document.getElementById('pageCount').textContent = pdfDoc.numPages;
+
+                // Показати canvas
+                document.getElementById('canvasWrapper').style.display = 'block';
+                document.getElementById('loading').classList.add('hidden');
+
+                // Рендерити першу сторінку
+                renderPage(1);
+                updateButtons();
+
+            } catch (error) {
+                console.error('PDF load error:', error);
+                showError('Помилка завантаження', error.message || 'Не вдалося завантажити PDF файл');
+            }
+        }
+
+        async function renderPage(num) {
+            if (isRendering) return;
+            isRendering = true;
+
+            // Fade out
+            canvas.classList.add('fade-out');
+
+            // Wait a tiny bit for fade to start
+            await new Promise(r => setTimeout(r, 60));
+
+            const page = await pdfDoc.getPage(num);
+            let vpScale = scale;
+
+            if (fitMode === 'width') {
+                const container = document.getElementById('pdfContainer');
+                const cs = getComputedStyle(container);
+                const padL = parseFloat(cs.paddingLeft);
+                const padR = parseFloat(cs.paddingRight);
+                const availableWidth = container.clientWidth - padL - padR - 8;
+                vpScale = availableWidth / page.getViewport({ scale: 1 }).width;
+                vpScale = Math.max(0.3, Math.min(vpScale, 3));
+            }
+
+            const viewport = page.getViewport({ scale: vpScale });
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            if (fitMode === 'width') {
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+            } else {
+                canvas.style.width = '';
+                canvas.style.height = '';
+            }
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+
+            // Fade in
+            canvas.classList.remove('fade-out');
+            canvas.classList.add('fade-in');
+
+            currentPage = num;
+            document.getElementById('pageDisplay').textContent = num;
+            document.getElementById('pageInput').value = num;
+            updateButtons();
+            saveProgress();
+            updateProgressIndicator();
+            updateReaderProgressBar();
+            showPageOverlay(num);
+
+            // Clean up after animation
+            setTimeout(() => {
+                canvas.classList.remove('fade-in');
+            }, 300);
+            isRendering = false;
+        }
+
+        function showPageOverlay(num) {
+            const el = document.getElementById('pageOverlay');
+            el.textContent = `Сторінка ${num} з ${pdfDoc.numPages}`;
+            el.classList.add('show');
+            clearTimeout(el._hideTimer);
+            el._hideTimer = setTimeout(() => el.classList.remove('show'), 1200);
+        }
+
+        function saveProgress() {
+            const progressKey = `pdf-progress-${bookId}`;
+            const progress = {
+                page: currentPage,
+                totalPages: pdfDoc.numPages,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem(progressKey, JSON.stringify(progress));
+        }
+
+        function loadProgress() {
+            const progressKey = `pdf-progress-${bookId}`;
+            const saved = localStorage.getItem(progressKey);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        function showProgressToast() {
+            const progress = loadProgress();
+            if (progress && progress.page > 1 && progress.page <= pdfDoc.numPages) {
+                document.getElementById('savedPage').textContent = progress.page;
+                document.getElementById('progressToast').classList.add('show');
+            }
+        }
+
+        function continuereading() {
+            const progress = loadProgress();
+            if (progress) {
+                renderPage(progress.page);
+                document.getElementById('pdfContainer').scrollTop = 0;
+            }
+            dismissToast();
+        }
+
+        function dismissToast() {
+            document.getElementById('progressToast').classList.remove('show');
+        }
+
+        function updateProgressIndicator() {
+            const percent = Math.round((currentPage / pdfDoc.numPages) * 100);
+            document.getElementById('progressBarFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = percent + '%';
+        }
+
+        function updateReaderProgressBar() {
+            const percent = Math.round((currentPage / pdfDoc.numPages) * 100);
+            document.getElementById('readerProgressFill').style.width = percent + '%';
+        }
+
+        function toggleFitMode() {
+            fitMode = fitMode === 'width' ? null : 'width';
+            document.getElementById('fitWidthBtn').classList.toggle('active', fitMode === 'width');
+            document.getElementById('pdfContainer').classList.toggle('fit-mode', fitMode === 'width');
+            if (fitMode === 'width') {
+                canvas.style.maxWidth = '';
+            }
+            if (pdfDoc) renderPage(currentPage);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= pdfDoc.numPages;
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                renderPage(currentPage - 1);
+                document.getElementById('pdfContainer').scrollTop = 0;
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < pdfDoc.numPages) {
+                renderPage(currentPage + 1);
+                document.getElementById('pdfContainer').scrollTop = 0;
+            }
+        }
+
+        function showPageInput(){
+            const inp=document.getElementById('pageInput');
+            document.getElementById('pageText').style.display='none';
+            inp.style.display='';
+            inp.focus();
+            inp.select();
+        }
+        function hidePageInput(){
+            document.getElementById('pageInput').style.display='none';
+            document.getElementById('pageText').style.display='flex';
+        }
+        function goToPage() {
+            const pageNum = parseInt(document.getElementById('pageInput').value);
+            if (pageNum >= 1 && pageNum <= pdfDoc.numPages) {
+                renderPage(pageNum);
+                document.getElementById('pdfContainer').scrollTop = 0;
+            } else {
+                document.getElementById('pageInput').value = currentPage;
+            }
+        }
+
+        function zoomIn() {
+            scale += 0.25;
+            if (fitMode) toggleFitMode();
+            renderPage(currentPage);
+        }
+
+        function zoomOut() {
+            if (scale > 0.5) {
+                scale -= 0.25;
+                if (fitMode) toggleFitMode();
+                renderPage(currentPage);
+            }
+        }
+
+        function showError(title, message) {
+            const loading = document.getElementById('loading');
+            loading.innerHTML = `
+                <div class="error">
+                    <div class="error-icon">📄</div>
+                    <div class="error-title">${title}</div>
+                    <div class="error-message">${message}</div>
+                    <button class="back-btn" onclick="goBack()" style="margin-top: 1rem;">
+                        Повернутися назад
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderText(data) {
+            document.getElementById('bookTitle').textContent = data.title || 'Читання';
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('canvasWrapper').style.display = 'none';
+            ['prevBtn','nextBtn','pageInfo','zoomOutBtn','zoomInBtn','fitWidthBtn','controlsDivider1'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});
+            document.getElementById('fontSizeDownBtn').style.display='';
+            document.getElementById('fontSizeUpBtn').style.display='';
+            document.getElementById('fontSizeLabel').style.display='flex';
+            textContainer.style.display = 'block';
+            textContainer.style.fontSize=(fontSize/100*1.05)+'rem';
+            const lines = data.text.split('\n');
+            let html = '<div class="title-page"><h1>' + escHtml(data.title) + '</h1><h2>' + escHtml(data.author) + '</h2></div>';
+            for (const line of lines) {
+                const t = line.trim();
+                if (!t) { html += '<p><br></p>'; continue; }
+                if (/^(chapter|chapter\s+\d+|the\s+end|book\s+\d+|volume\s+\d+)/i.test(t) || /^[ivxlcdm]+\.$/i.test(t)) {
+                    html += '<div class="chapter">' + escHtml(t) + '</div>';
+                    continue;
+                }
+                if (/^[*\s]{3,}$/.test(t) || /^\-{3,}$/.test(t)) { html += '<p style="text-align:center;opacity:.4">* * *</p>'; continue; }
+                html += '<p>' + escHtml(t) + '</p>';
+            }
+            textContainer.innerHTML = html;
+            updateTextProgress();
+            textContainer.addEventListener('scroll', updateTextProgress);
+        }
+
+        function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        function updateTextProgress() {
+            const scrollTop = textContainer.scrollTop;
+            const scrollHeight = textContainer.scrollHeight - textContainer.clientHeight;
+            const percent = scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+            document.getElementById('progressBarFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = percent + '%';
+            document.getElementById('readerProgressFill').style.width = percent + '%';
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                goBack();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                e.preventDefault();
+                showPageInput();
+            } else if (!isTextMode && e.key === 'ArrowLeft') {
+                prevPage();
+            } else if (!isTextMode && e.key === 'ArrowRight') {
+                nextPage();
+            } else if (e.key === '+' || e.key === '=') {
+                if(isTextMode)fontSizeUp();else zoomIn();
+            } else if (e.key === '-') {
+                if(isTextMode)fontSizeDown();else zoomOut();
+            }
+        });
+
+        // Swipe support for tablets
+        if (!isTextMode) document.getElementById('pdfContainer').addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+        document.getElementById('pdfContainer').addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].screenX - touchStartX;
+            const dy = e.changedTouches[0].screenY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 60) {
+                if (dx < 0) nextPage();
+                else prevPage();
+            }
+        }, { passive: true });
+
+        async function loadBookAndContent() {
+            try {
+                const bookRes=await fetch('/api/v1/books/'+bookId);
+                if(bookRes.ok){const book=await bookRes.json();document.getElementById('bookTitle').textContent=book.title||'Читання';document.title=(book.title||'')+' - LibraFlow'}
+            }catch{}
+            if(isTextMode){
+                try{const d=await fetchWithTimeout('/api/v1/books/'+bookId+'/text',2000).then(r=>r.ok?r.json():Promise.reject());renderText(d)}catch(e){showError('Текст недоступний','Для цієї книги немає текстової версії')}
+            }else{
+                fetchWithTimeout('/api/v1/books/'+bookId+'/text',2000).then(r=>{if(r.ok){r.json().then(d=>{renderText(d)})}else loadPdf()}).catch(()=>loadPdf())
+            }
+        }
+        loadBookAndContent();
+
+        function fontSizeUp(){fontSize=Math.min(200,fontSize+10);applyFontSize()}
+        function fontSizeDown(){fontSize=Math.max(60,fontSize-10);applyFontSize()}
+        function applyFontSize(){textContainer.style.fontSize=(fontSize/100*1.05)+'rem';document.getElementById('fontSizeLabel').textContent=fontSize+'%'}
+
+        function getTextProgress() {
+            const st = textContainer.scrollTop, sh = textContainer.scrollHeight - textContainer.clientHeight;
+            return sh > 0 ? Math.round((st / sh) * 100) : 0;
+        }
+
+        // Функція збереження прогресу на сервер
+        async function saveProgressToServer() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Увійдіть в систему, щоб зберегти прогрес');
+                return;
+            }
+
+            const btn = document.getElementById('saveProgressBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Збереження...';
+
+            try {
+                const body = isTextMode ? {
+                    bookId: bookId,
+                    currentPage: getTextProgress(),
+                    totalPages: 100,
+                    progressPercent: getTextProgress()
+                } : {
+                    bookId: bookId,
+                    currentPage: currentPage,
+                    totalPages: pdfDoc.numPages
+                };
+                const response = await fetch('/api/v1/reading-progress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Збережено!';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error('Помилка збереження');
+                }
+            } catch (error) {
+                console.error('Save progress error:', error);
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Помилка';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        let _chatHistory = [];
+
+        function toggleChat() {
+            const p = document.getElementById('chatPanel');
+            const b = document.getElementById('chatToggle');
+            p.classList.toggle('open');
+            b.classList.toggle('active');
+            if(p.classList.contains('open')){setTimeout(()=>document.getElementById('chatInput').focus(),300)}
+        }
+
+        function chatAsk(q) {
+            document.getElementById('chatInput').value = q;
+            sendChatMsg();
+        }
+
+        async function sendChatMsg() {
+            const inp = document.getElementById('chatInput');
+            const msgs = document.getElementById('chatMessages');
+            const q = inp.value.trim();
+            if(!q) return;
+            inp.value = '';
+            inp.disabled = true;
+
+            msgs.innerHTML += '<div class="chat-msg user">' + q.replace(/</g,'&lt;') + '</div>';
+            msgs.innerHTML += '<div class="chat-msg loading" id="chatLoadingMsg">думає...</div>';
+            msgs.scrollTop = msgs.scrollHeight;
+
+            const token = localStorage.getItem('token');
+            if(!token) {
+                document.getElementById('chatLoadingMsg')?.remove();
+                msgs.innerHTML += '<div class="chat-msg ai" style="color:var(--blue)">⚠️ Увійдіть у систему на головній сторінці</div>';
+                inp.disabled = false;
+                msgs.scrollTop = msgs.scrollHeight;
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/v1/books/' + bookId + '/chat/stream', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json','Authorization':'Bearer ' + token},
+                    body: JSON.stringify({
+                        question: q,
+                        currentPage: isTextMode ? null : currentPage
+                    })
+                });
+                document.getElementById('chatLoadingMsg')?.remove();
+                if(!res.ok) throw new Error('HTTP ' + res.status);
+                const aiBubble = document.createElement('div');
+                aiBubble.className = 'chat-msg ai';
+                msgs.appendChild(aiBubble);
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '', done = false, errorMsg = null;
+                while(!done) {
+                    const {value,done:d} = await reader.read(); done = d;
+                    if(value) buffer += decoder.decode(value, {stream: !done});
+                    let idx;
+                    while((idx = buffer.indexOf('\n\n')) !== -1) {
+                        const msg = buffer.slice(0, idx); buffer = buffer.slice(idx + 2);
+                        if(!msg.startsWith('data: ')) continue;
+                        const data = msg.slice(6);
+                        if(data === '[DONE]') { done = true; break; }
+                        try {
+                            const parsed = JSON.parse(data);
+                            if(parsed.error) { errorMsg = parsed.error; done = true; break; }
+                            if(parsed.text) { aiBubble.textContent += parsed.text; msgs.scrollTop = msgs.scrollHeight; }
+                        } catch {}
+                    }
+                }
+                if(errorMsg) { aiBubble.remove(); msgs.innerHTML += '<div class="chat-msg ai" style="color:var(--blue)">⚠️ ' + errorMsg.replace(/</g,'&lt;') + '</div>'; }
+            } catch(e) {
+                document.getElementById('chatLoadingMsg')?.remove();
+                msgs.innerHTML += '<div class="chat-msg ai" style="color:var(--blue)">⚠️ Помилка з\'єднання</div>';
+            }
+            inp.disabled = false;
+            inp.focus();
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+    </script>
+</body>
+</html>
