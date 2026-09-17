@@ -40,7 +40,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>().ToTable("users");
         modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens");
         modelBuilder.Entity<Genre>().ToTable("genres");
-        modelBuilder.Entity<Book>().ToTable("books");
+        modelBuilder.Entity<Book>().ToTable("books", table =>
+        {
+            table.HasCheckConstraint("CK_books_available_copies", "available_copies >= 0 AND available_copies <= total_copies");
+            table.HasCheckConstraint("CK_books_total_copies", "total_copies BETWEEN 1 AND 1000");
+            table.HasCheckConstraint("CK_books_pages", "pages IS NULL OR pages BETWEEN 1 AND 100000");
+            table.HasCheckConstraint("CK_books_rating", "rating IS NULL OR rating BETWEEN 0 AND 5");
+        });
         modelBuilder.Entity<Review>().ToTable("reviews");
         modelBuilder.Entity<Favorite>().ToTable("favorites");
         modelBuilder.Entity<ReadingProgress>().ToTable("reading_progress");

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using LibraryAPI.Validation;
 
 namespace LibraryAPI.DTOs
 {
@@ -14,25 +15,34 @@ namespace LibraryAPI.DTOs
 
         [Required(ErrorMessage = "ISBN обов'язковий")]
         [StringLength(20, MinimumLength = 10, ErrorMessage = "ISBN має бути від 10 до 20 символів")]
+        [Isbn]
         public string Isbn { get; set; } = null!;
 
+        [RegularExpression(@"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", ErrorMessage = "GenreId має бути коректним ідентифікатором")]
         public string? GenreId { get; set; }
 
         [Range(1, 1000, ErrorMessage = "Кількість примірників має бути від 1 до 1000")]
         public int TotalCopies { get; set; }
 
         [StringLength(500, ErrorMessage = "Посилання на файл занадто довге")]
+        [RegularExpression(@"^(https?://|/).+", ErrorMessage = "PdfUrl має бути URL або локальним шляхом")]
         public string? PdfUrl { get; set; }
 
+        [StringLength(2000, ErrorMessage = "Цитата занадто довга")]
         public string? Quote { get; set; }
 
         [Range(1, 100000, ErrorMessage = "Кількість сторінок має бути від 1 до 100000")]
         public int? Pages { get; set; }
 
+        [StringLength(1000, ErrorMessage = "Посилання на зображення занадто довге")]
+        [RegularExpression(@"^(https?://|/).+", ErrorMessage = "ImageUrl має бути URL або локальним шляхом")]
         public string? ImageUrl { get; set; }
 
+        [Range(1, int.MaxValue, ErrorMessage = "GutenbergId має бути більшим за 0")]
         public int? GutenbergId { get; set; }
 
+        [StringLength(5000, ErrorMessage = "Опис книги занадто довгий")]
         public string? Description { get; set; }
+
     }
 }

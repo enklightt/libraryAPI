@@ -1,4 +1,5 @@
-﻿using LibraryAPI.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
+using LibraryAPI.DTOs;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -216,6 +217,10 @@ namespace LibraryAPI.Controllers
 
 public class ChatRequest
 {
+    [Required(ErrorMessage = "Введіть питання")]
+    [StringLength(2000, MinimumLength = 2, ErrorMessage = "Питання має бути від 2 до 2000 символів")]
     public string Question { get; set; } = "";
+
+    [Range(1, int.MaxValue, ErrorMessage = "CurrentPage має бути більшим за 0")]
     public int? CurrentPage { get; set; }
 }
