@@ -1,150 +1,134 @@
-# libraryAPI — цифрова бібліотека
+# LibraryAPI
 
-REST API для онлайн-бібліотеки: каталог книг, читання PDF/текстів, прогрес читання, відгуки, вибране, «хочу прочитати», гейміфікація, друзі, AI-чат про книгу (Groq). + статичний фронтенд `wwwroot/index.html` (LibraFlow).
+## Призначення
 
-База: `api/v1/...`, Swagger в Development.
+LibraryAPI — це backend-застосунок для електронної бібліотеки, який надає REST API для управління книгами, жанрами, користувачами та пов'язаною діяльністю (рецензії, обране, список "хочу прочитати", прогрес читання). Застосунок також підтримує роботу з PDF-файлами книг та інтеграцію з AI-сервісом для чату щодо змісту книги.
 
-## Можливості
+Основні можливості:
 
-- **Книги:** пошук, фільтр за жанром, сортування, пагінація, CRUD (admin/manager), завантаження PDF, проксі PDF, текст з Project Gutenberg / Gutendex
-- **Auth:** register / login / refresh, JWT + Refresh-токени (ротація), BCrypt, ролі `admin, customer, librarian, manager`
-- **Читач:** `favorites`, `want-to-read` (toggle), `reading-progress` (upsert, % , статуси `reading|finished`, `recent`, `activity` heatmap по днях)
-- **Соціальне:** `reviews` (1 на юзер-книгу, перерахунок рейтингу), `friends` (заявки pending/accept/reject, профіль, спільні книги, пошук)
-- **Гейміфікація:** 5 ачивок (`first_book`, `read_5_books`, `bookworm`, `night_reader`, `favorite_collector`), титули
-- **AI:** `POST books/{id}/chat` та `/chat/stream` (SSE) — Groq `llama-3.3-70b-versatile`, відповіді українською
+- реєстрація та автентифікація користувачів (JWT, refresh-токени);
+- CRUD-операції для книг та жанрів;
+- завантаження, зберігання та видача PDF-файлів книг (локально або за зовнішнім посиланням);
+- отримання тексту книги;
+- чат з AI-асистентом про конкретну книгу (у тому числі у режимі стрімінгу);
+- рецензії, оцінки, обране, список "хочу прочитати", прогрес читання.
 
-## Стек
+## Структура проєкту
 
-`ASP.NET Core net10.0`, `EF Core 9 + Pomelo.EntityFrameworkCore.MySql 9 (MySQL 8.0)`, `JwtBearer 10.0.7`, `BCrypt.Net-Next 4.1.0`, `Swashbuckle 10.1.7`
+```
+libraryAPI/
+├── Controllers/          # API-контролери (обробка HTTP-запитів)
+├── Models/                # Моделі даних (сутності бази даних)
+├── DTOs/                  # Data Transfer Objects — моделі для запитів/відповідей API
+├── Data/
+│   └── AppDbContext.cs    # Контекст бази даних (EF Core)
+├── Services/               # Бізнес-логіка (сервісний шар)
+├── Middleware/             # Проміжне ПЗ (обробка помилок, автентифікація тощо)
+├── Migrations/             # Міграції бази даних (EF Core)
+├── Properties/
+│   └── launchSettings.json # Налаштування запуску проєкту
+├── wwwroot/                 # Статичні файли, у т.ч. завантажені PDF книг
+├── DatabaseSeeder.cs        # Наповнення бази початковими даними
+├── TestDataSeeder.cs        # Наповнення бази тестовими даними
+├── UpdateBooksData.cs       # Допоміжний скрипт оновлення даних книг
+├── add_books.sql            # SQL-скрипт для додавання книг
+├── appsettings.json          # Базова конфігурація (без секретів)
+├── appsettings.Development.json # Конфігурація для середовища розробки
+├── Program.cs                # Точка входу, конфігурація застосунку та DI
+└── libraryAPI.csproj         # Файл проєкту (.NET SDK, залежності)
+```
 
-Архітектура: `Controllers -> Services (Scoped) -> AppDbContext`, `Middleware/ExceptionMiddleware`, сідери `DatabaseSeeder` + `TestDataSeeder` (тільки Dev).
+## Технології
 
-## Швидкий старт
+- **.NET / ASP.NET Core** — фреймворк для побудови веб-API
+- **Entity Framework Core** — ORM для роботи з базою даних
+- **Pomelo.EntityFrameworkCore.MySql** — провайдер EF Core для MySQL
+- **MySQL** — реляційна база даних
+- **JWT (JSON Web Tokens)** — автентифікація та авторизація
+- **BCrypt.Net** — хешування паролів
+- **Swashbuckle (Swagger)** — документація та тестування API
+- **Groq API** — інтеграція з мовною моделлю для чату про книги
 
-Вимоги: `.NET 10 SDK`, `MySQL 8.0`, `dotnet-ef` (опційно).
+## Залежності
+
+Основні NuGet-пакети (див. `libraryAPI.csproj`):
+
+| Пакет | Призначення |
+|---|---|
+| `BCrypt.Net-Next` | Хешування та перевірка паролів |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | Автентифікація через JWT |
+| `Microsoft.EntityFrameworkCore` | ORM для роботи з базою даних |
+| `Microsoft.EntityFrameworkCore.Tools` | Інструменти для міграцій EF Core |
+| `Pomelo.EntityFrameworkCore.MySql` | Провайдер EF Core для MySQL |
+| `Swashbuckle.AspNetCore` | Генерація Swagger-документації |
+
+## Запуск проєкту
+
+### Попередні вимоги
+
+- Встановлений .NET SDK відповідної версії (див. `TargetFramework` у `libraryAPI.csproj`)
+- Встановлений та запущений сервер MySQL (перевірити активну службу можна командою `Get-Service -Name "MySQL*"` у PowerShell)
+- Клієнт MySQL для виконання SQL-команд (консольний `mysql`, або графічний інструмент, наприклад MySQL Workbench)
+
+### 1. Клонування репозиторію
 
 ```bash
-git clone <repo-url>
+git clone <посилання-на-репозиторій>
 cd libraryAPI
+```
 
-# 1. БД
-mysql -u root -p -e "CREATE DATABASE library_db CHARACTER SET utf8mb4;"
+### 2. Створення бази даних та користувача MySQL
 
-# 2. Конфігурація (НЕ кладіть секрети в appsettings.json)
+Підключіться до MySQL під root-користувачем (за потреби — вказавши повний шлях до `mysql.exe`, якщо він не доданий у PATH):
+
+```bash
+mysql -u root -p
+```
+
+У консолі MySQL виконайте:
+
+```sql
+CREATE DATABASE library_db CHARACTER SET utf8mb4;
+CREATE USER 'lib_user'@'localhost' IDENTIFIED BY 'ваш_пароль';
+GRANT ALL PRIVILEGES ON library_db.* TO 'lib_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 3. Налаштування конфігурації (User Secrets)
+
+Секрети (рядок підключення до бази, ключі JWT та Groq) не зберігаються в `appsettings.json`, а передаються через User Secrets:
+
+```bash
 dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=127.0.0.1;Port=3306;Database=library_db;User=lib_user;Password=***"
-dotnet user-secrets set "JwtSettings:Secret" "<мінімум 32 символи, 256 біт>"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=127.0.0.1;Port=3306;Database=library_db;User=lib_user;Password=ваш_пароль;"
+dotnet user-secrets set "JwtSettings:Secret" "<мінімум 32 символи>"
 dotnet user-secrets set "GroqSettings:ApiKey" "<gsk_...>"
+```
 
-# або через env:
-# ConnectionStrings__DefaultConnection, JwtSettings__Secret, GroqSettings__ApiKey
+Перевірити збережені значення можна командою:
 
-# 3. Міграції
+```bash
+dotnet user-secrets list
+```
+
+### 4. Застосування міграцій бази даних
+
+```bash
 dotnet ef database update
+```
 
-# 4. Запуск
+Ця команда створить усі необхідні таблиці в базі `library_db` відповідно до поточних міграцій проєкту.
+
+### 5. Запуск проєкту
+
+```bash
 dotnet run
 ```
 
-URLs (див. `Properties/launchSettings.json`): `https://localhost:7043`, `http://localhost:5043`. Swagger: `https://localhost:7043/swagger`. Фронт: `https://localhost:7043/` (`UseDefaultFiles + UseStaticFiles`).
+Після запуску API буде доступне за адресою, вказаною в `Properties/launchSettings.json` (`applicationUrl`). Swagger-документація доступна за замовчуванням за адресою `/swagger`.
 
-### Конфіг `appsettings.json`
+### Типові проблеми при запуску
 
-```json
-{
-  "ConnectionStrings": { "DefaultConnection": "Server=...;Database=library_db;User=...;Password=...;" },
-  "JwtSettings": { "Secret": "...", "AccessTokenExpiryMinutes": 60, "RefreshTokenExpiryDays": 7 },
-  "GroqSettings": { "ApiKey": "...", "Model": "llama-3.3-70b-versatile" }
-}
-```
-
-## База даних (MySQL 8.0, EF Core, `Data/AppDbContext.cs`)
-
-Всі таблиці `snake_case`. Створюються через `dotnet ef database update`. `DatabaseSeeder` сідить ролі + жанри.
-
-| Таблиця | Поля | Зв'язки / нотатки |
-|---|---|---|
-| `roles` | `Id int PK AI`, `Name` | 1—* `users`. Сід: 1 admin, 2 customer, 3 librarian, 4 manager |
-| `users` | `Id Guid PK`, `Name`, `Email unique`, `Password (BCrypt)`, `AvatarUrl?`, `RoleId=2 FK`, `IsActive`, `EquippedTitle?`, `CreatedAt/UpdatedAt` | `Role`, `Reviews`, `Favorites`, `WantToReads`, `RefreshTokens`, `Friends` |
-| `refresh_tokens` | `Id int PK AI`, `UserId FK`, `Token`, `ExpiresAt`, `CreatedAt` | каскад від `users`, ротація при refresh, чистка прострочених |
-| `genres` | `Id Guid PK`, `Name` | 1—* `books` (nullable). Сід: Фантастика, Детектив, Роман, Наукова література, Історія, Поезія |
-| `books` | `Id Guid PK`, `Title`, `Author`, `Isbn unique`, `GenreId? FK`, `TotalCopies/AvailableCopies`, `PdfUrl?`, `ImageUrl?`, `Description?`, `Quote?`, `Pages?`, `Rating? decimal`, `GutenbergId?`, `SourceUrl?`, `IsActive`, `CreatedAt/UpdatedAt` | `Genre`, `Reviews`, `Favorites`, `WantToReads`. Видалення чистить пов'язані вручну в `BookService` |
-| `reviews` | `Id Guid PK`, `BookId FK`, `UserId FK`, `Rating 1-5`, `Text? <=2000`, `CreatedAt/UpdatedAt` | unique `{BookId,UserId}` — 1 відгук на книгу, перераховує `books.Rating=AVG` |
-| `favorites` | `UserId PK/FK`, `BookId PK/FK`, `AddedAt` | композитний PK, каскад з обох боків |
-| `want_to_read` | `UserId PK/FK`, `BookId PK/FK`, `CreatedAt` | композитний PK, toggle-логіка |
-| `reading_progress` | `Id Guid PK`, `UserId FK`, `BookId FK`, `CurrentPage`, `TotalPages`, `ProgressPercent`, `Status reading|finished`, `LastReadAt/CreatedAt/UpdatedAt` | unique `{UserId,BookId}`, `>=100% => finished`, пише в `daily_activity` |
-| `daily_activity` | `Id Guid PK`, `UserId FK`, `Date (день)`, `PagesRead` | heatmap `activity?weeks=12`, добиваються нулі |
-| `friends` | `Id Guid PK`, `UserId FK`, `FriendUserId FK`, `CreatedAt` | самопосилання на `users` 2x, зберігається в обидва боки при accept |
-| `friend_requests` | `Id Guid PK`, `FromUserId FK`, `ToUserId FK`, `Status pending|accepted`, `CreatedAt/UpdatedAt` | reject/cancel = видалення рядка |
-
-ER-зв'язки: `Role 1-* User 1-* (Review|Favorite|WantToRead|ReadingProgress|DailyActivity|RefreshToken) *-1 Book`; `Genre 1-* Book`; `User *-* User` через `friends` + `friend_requests`.
-
-### Тестові акаунти (тільки Development, `TestDataSeeder`)
-
-| Роль | Email | Пароль |
-|---|---|---|
-| admin | admin@library.com | admin123 |
-| customer | ivan@example.com | password123 |
-| customer | maria@example.com | password123 |
-| librarian | librarian@library.com | librarian123 |
-
-Сідиться: 4 ролі, 6 жанрів, 9 книг, прогрес Івана/Марії, `DailyActivity` за 84 дні.
-
-## API (скорочено)
-
-Auth: `Authorization: Bearer <accessToken>`
-
-```
-POST api/v1/auth/register | login | refresh
-GET  api/v1/books?page&search&genreId&sortBy&sortOrder
-GET  api/v1/books/{id} | GET {id}/pdf | GET {id}/text
-POST api/v1/books (admin,manager) | PUT {id} | DELETE {id} | POST {id}/pdf
-POST api/v1/books/{id}/chat [Authorize] | POST {id}/chat/stream (SSE)
-
-GET  api/v1/favorites [Authorize] | POST {bookId} | DELETE {bookId} | GET check/{bookId}
-GET  api/v1/want-to-read [Authorize] | GET {bookId} | POST {bookId} (toggle)
-
-GET  api/v1/books/{bookId}/reviews
-POST api/v1/books/{bookId}/reviews [Authorize] (create-or-update)
-DELETE api/v1/books/{bookId}/reviews [Authorize]
-GET  api/v1/reviews/my [Authorize]
-DELETE api/v1/books/{bookId}/reviews/{reviewId} (admin,manager)
-
-POST api/v1/reading-progress [Authorize] {bookId,currentPage,totalPages,status?}
-GET  api/v1/reading-progress/my | book/{bookId} | recent?count=5 | activity?weeks=12
-
-GET  api/v1/gamification/achievements | titles [Authorize]
-GET  api/v1/friends | POST request | GET requests|requests/sent
-POST api/v1/friends/requests/{id}/accept|reject | DELETE requests/{id} | DELETE {friendUserId}
-GET  api/v1/friends/{id}/profile|favorites|reading | GET search?q= [Authorize]
-
-GET  api/v1/users/me [Authorize] | PUT me/title
-GET  api/v1/users (admin,manager) | PUT {id}/role (admin) | PUT {id}/toggle-active
-GET  api/v1/genres
-```
-
-Деталі: `READING_PROGRESS.md`, Swagger, `libraryAPI.http`.
-
-## Структура
-
-```
-Controllers/ Auth,Books,Favorites,WantToRead,Reviews,ReadingProgress,Gamification,Friends,Users,Genres
-Services/ *Service + I*Service (Auth,Book,BookText,BookChat,Favorite,WantToRead,Review,ReadingProgress,Gamification,Friend,UserAdmin)
-Models/ User,Role,RefreshToken,Genre,Book,Review,Favorite,ReadingProgress,WantToRead,DailyActivity,Friend,FriendRequest
-DTOs/ CreateBook,UpdateBook,BookResponse,PagedResponse,Register,Login,RefreshTokenRequest,Review,ReadingProgress,Favorite,Achievement,Friend
-Data/AppDbContext.cs (таблиці snake_case, композитні PK Favorite/WantToRead, unique Review/Progress)
-Migrations/ Middleware/ExceptionMiddleware.cs
-DatabaseSeeder.cs TestDataSeeder.cs UpdateBooksData.cs wwwroot/
-```
-
-## Корисні команди
-
-```bash
-dotnet ef migrations add <Name>
-dotnet ef database update
-dotnet build | dotnet watch run
-```
-
-## Нотатки безпеки
-
-Перед продом: винести секрети з `appsettings.json` в secrets/env + ротувати, замінити `CORS AllowAnyOrigin` на `WithOrigins()`, ховати `ex.Message` в prod, додати `UseHttpsRedirection`, JWT `Issuer/Audience`, least-privilege юзера БД замість `root`.
+- **`Access denied for user`** — невірний пароль або відсутні права користувача MySQL; перевірити командою `SHOW GRANTS FOR 'lib_user'@'localhost';` у консолі MySQL.
+- **`mysql: The term 'mysql' is not recognized`** — консольний клієнт MySQL не доданий у PATH; викликати через повний шлях до `mysql.exe` або скористатися MySQL Workbench.
+- **`Unable to create a 'DbContext'... Format of the initialization string does not conform to specification`** — помилка у форматі рядка підключення в User Secrets (частіше через спецсимволи в паролі); перевірити командою `dotnet user-secrets list` та за потреби задати простіший пароль.
