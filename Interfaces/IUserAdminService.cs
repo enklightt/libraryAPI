@@ -1,4 +1,4 @@
-namespace LibraryAPI.Services;
+namespace LibraryAPI.Interfaces;
 
 public interface IUserAdminService
 {

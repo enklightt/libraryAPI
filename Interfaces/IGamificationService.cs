@@ -1,6 +1,6 @@
 using LibraryAPI.DTOs;
 
-namespace LibraryAPI.Services;
+namespace LibraryAPI.Interfaces;
 
 public interface IGamificationService
 {

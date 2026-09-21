@@ -5,6 +5,7 @@ using System.Text;
 using BCrypt.Net;
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
+using LibraryAPI.Interfaces;
 using LibraryAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using LibraryAPI.DTOs;
+using LibraryAPI.Interfaces;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -1,4 +1,5 @@
 using LibraryAPI.Data;
+using LibraryAPI.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryAPI.Services;

@@ -1,5 +1,6 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
+using LibraryAPI.Interfaces;
 using LibraryAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -248,6 +249,14 @@ namespace LibraryAPI.Services
 
             if (!file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 return (false, "Дозволені тільки PDF файли");
+
+            await using (var input = file.OpenReadStream())
+            {
+                var header = new byte[5];
+                var bytesRead = await input.ReadAsync(header.AsMemory(0, header.Length));
+                if (bytesRead != header.Length || header[0] != 0x25 || header[1] != 0x50 || header[2] != 0x44 || header[3] != 0x46 || header[4] != 0x2D)
+                    return (false, "Файл не є коректним PDF");
+            }
 
             var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "books");
             Directory.CreateDirectory(wwwrootPath);
