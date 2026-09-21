@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<DailyActivity> DailyActivities => Set<DailyActivity>();
     public DbSet<Friend> Friends => Set<Friend>();
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
+    public DbSet<RecommendationFeedback> RecommendationFeedback => Set<RecommendationFeedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,6 +69,19 @@ public class AppDbContext : DbContext
             entity.HasOne(r => r.ToUser)
                 .WithMany()
                 .HasForeignKey(r => r.ToUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<RecommendationFeedback>(entity =>
+        {
+            entity.ToTable("recommendation_feedback");
+            entity.HasIndex(feedback => new { feedback.UserId, feedback.BookId }).IsUnique();
+            entity.HasOne(feedback => feedback.User)
+                .WithMany()
+                .HasForeignKey(feedback => feedback.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(feedback => feedback.Book)
+                .WithMany()
+                .HasForeignKey(feedback => feedback.BookId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

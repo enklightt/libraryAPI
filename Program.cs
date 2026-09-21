@@ -40,6 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -84,6 +85,8 @@ builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IBookTextService, BookTextService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IBookChatService, BookChatService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddHostedService<RecommendationRefreshService>();
 
 var app = builder.Build();
 
