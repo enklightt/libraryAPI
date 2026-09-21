@@ -20,11 +20,7 @@ namespace LibraryAPI.Controllers
         private readonly IBookChatService _bookChatService;
         private readonly IBookPdfService _bookPdfService;
 
-        public BooksController(
-            IBookService bookService,
-            IBookTextService bookTextService,
-            IBookChatService bookChatService,
-            IBookPdfService bookPdfService)
+        public BooksController(IBookService bookService, IBookTextService bookTextService, IBookChatService bookChatService, IBookPdfService bookPdfService)
         {
             _bookService = bookService;
             _bookTextService = bookTextService;
@@ -43,6 +39,9 @@ namespace LibraryAPI.Controllers
         /// <param name="sortOrder">Порядок сортування: "asc" або "desc". За замовчуванням: "asc".</param>
         /// <returns>Сторінкова відповідь зі списком книг.</returns>
         /// <response code="200">Список книг успішно отримано.</response>
+            _bookPdfService = bookPdfService;
+        }
+
         [HttpGet]
         [ProducesResponseType(typeof(PagedResponse<BookResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResponse<BookResponseDto>>> GetBooks(
@@ -242,29 +241,13 @@ namespace LibraryAPI.Controllers
             var book = await _bookService.GetByIdAsync(id);
             if (book == null)
                 return NotFound(new { message = "Книгу не знайдено" });
-
             var result = await _bookPdfService.GetPdfStreamAsync(book.PdfUrl);
             if (!result.Success || result.Stream == null)
                 return NotFound(new { message = result.Error });
-
             Response.Headers["Content-Disposition"] = "inline";
             return File(result.Stream, "application/pdf");
         }
 
-        /// <summary>
-        /// Задає питання про книгу (звичайна відповідь).
-        /// </summary>
-        /// <remarks>
-        /// Потрібна авторизація.  
-        /// Повертає повну відповідь після генерації.
-        /// </remarks>
-        /// <param name="id">Ідентифікатор книги.</param>
-        /// <param name="request">Об'єкт з питанням та (опціонально) поточною сторінкою.</param>
-        /// <returns>Відповідь на питання про книгу.</returns>
-        /// <response code="200">Відповідь успішно згенеровано.</response>
-        /// <response code="400">Питання порожнє.</response>
-        /// <response code="404">Книгу не знайдено.</response>
-        /// <response code="401">Користувач не авторизований.</response>
         [Authorize]
         [HttpPost("{id}/chat")]
         [ProducesResponseType(StatusCodes.Status200OK)]
