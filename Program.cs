@@ -113,5 +113,31 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/health", async (AppDbContext context) =>
+{
+    try
+    {
+        var databaseAvailable = await context.Database.CanConnectAsync();
+        var response = new
+        {
+            status = databaseAvailable ? "Healthy" : "Degraded",
+            database = databaseAvailable ? "Available" : "Unavailable",
+            timestamp = DateTime.UtcNow
+        };
+
+        return databaseAvailable
+            ? Results.Ok(response)
+            : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch
+    {
+        return Results.Json(new
+        {
+            status = "Degraded",
+            database = "Unavailable",
+            timestamp = DateTime.UtcNow
+        }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.Run();
