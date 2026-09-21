@@ -234,6 +234,40 @@ namespace libraryAPI.Migrations
                     b.ToTable("genres", (string)null);
                 });
 
+            modelBuilder.Entity("LibraryAPI.Models.RecommendationFeedback", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BookId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("book_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsPositive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_positive");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("UserId", "BookId")
+                        .IsUnique();
+
+                    b.ToTable("recommendation_feedback", (string)null);
+                });
+
             modelBuilder.Entity("LibraryAPI.Models.ReadingProgress", b =>
                 {
                     b.Property<string>("Id")
@@ -518,6 +552,25 @@ namespace libraryAPI.Migrations
                 });
 
             modelBuilder.Entity("LibraryAPI.Models.ReadingProgress", b =>
+                {
+                    b.HasOne("Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LibraryAPI.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LibraryAPI.Models.RecommendationFeedback", b =>
                 {
                     b.HasOne("Book", "Book")
                         .WithMany()

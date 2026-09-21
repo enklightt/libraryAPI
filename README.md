@@ -11,6 +11,7 @@ REST API для онлайн-бібліотеки: каталог книг, чи
 - **Читач:** `favorites`, `want-to-read` (toggle), `reading-progress` (upsert, % , статуси `reading|finished`, `recent`, `activity` heatmap по днях)
 - **Соціальне:** `reviews` (1 на юзер-книгу, перерахунок рейтингу), `friends` (заявки pending/accept/reject, профіль, спільні книги, пошук)
 - **Гейміфікація:** 5 ачивок (`first_book`, `read_5_books`, `bookworm`, `night_reader`, `favorite_collector`), титули
+- **Рекомендації:** персональні та популярні книги, схожі книги, пояснення рекомендації, feedback, кешування і фонове оновлення
 - **AI:** `POST books/{id}/chat` та `/chat/stream` (SSE) — Groq `llama-3.3-70b-versatile`, відповіді українською
 
 ## Стек
@@ -121,6 +122,11 @@ GET  api/v1/friends/{id}/profile|favorites|reading | GET search?q= [Authorize]
 GET  api/v1/users/me [Authorize] | PUT me/title
 GET  api/v1/users (admin,manager) | PUT {id}/role (admin) | PUT {id}/toggle-active
 GET  api/v1/genres
+
+GET  api/v1/recommendations?page=1&pageSize=20 (гості отримують популярні книги)
+GET  api/v1/recommendations/similar/{bookId}
+GET  api/v1/recommendations/explanation/{bookId} [Authorize]
+POST api/v1/recommendations/{bookId}/feedback [Authorize] {isPositive:true|false}
 ```
 
 Деталі: `READING_PROGRESS.md`, Swagger, `libraryAPI.http`.
@@ -128,9 +134,9 @@ GET  api/v1/genres
 ## Структура
 
 ```
-Controllers/ Auth,Books,Favorites,WantToRead,Reviews,ReadingProgress,Gamification,Friends,Users,Genres
-Services/ *Service + I*Service (Auth,Book,BookText,BookChat,Favorite,WantToRead,Review,ReadingProgress,Gamification,Friend,UserAdmin)
-Models/ User,Role,RefreshToken,Genre,Book,Review,Favorite,ReadingProgress,WantToRead,DailyActivity,Friend,FriendRequest
+Controllers/ Auth,Books,Favorites,WantToRead,Reviews,ReadingProgress,Gamification,Friends,Users,Genres,Recommendations
+Services/ *Service + I*Service (Auth,Book,BookText,BookChat,Favorite,WantToRead,Review,ReadingProgress,Gamification,Friend,UserAdmin,Recommendation)
+Models/ User,Role,RefreshToken,Genre,Book,Review,Favorite,ReadingProgress,WantToRead,DailyActivity,Friend,FriendRequest,RecommendationFeedback
 DTOs/ CreateBook,UpdateBook,BookResponse,PagedResponse,Register,Login,RefreshTokenRequest,Review,ReadingProgress,Favorite,Achievement,Friend
 Data/AppDbContext.cs (таблиці snake_case, композитні PK Favorite/WantToRead, unique Review/Progress)
 Migrations/ Middleware/ExceptionMiddleware.cs
