@@ -8,6 +8,7 @@ using LibraryAPI.Interfaces;
 using LibraryAPI.Middleware;
 using LibraryAPI.Services;
 using LibraryAPI;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,7 +64,23 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Library API",
+        Version = "v1",
+        Description = "API для роботи з бібліотекою книг"
+    });
+
+    // Підключення XML-коментарів
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
 
 builder.Services.AddCors(options =>
 {
