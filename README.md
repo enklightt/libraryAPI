@@ -123,15 +123,23 @@ GET  api/v1/users (admin,manager) | PUT {id}/role (admin) | PUT {id}/toggle-acti
 GET  api/v1/genres
 ```
 
-Повний перелік маршрутів і контрактів: [docs/API.md](docs/API.md). Деталі прогресу читання: `READING_PROGRESS.md`, Swagger у Development, приклади запитів: `libraryAPI.http`.
+Кожен controller action має XML-коментарі з призначенням, параметрами, response codes та прикладами; Swagger підключає XML-файл і доступний у Development. Повний перелік маршрутів і контрактів: [docs/API.md](docs/API.md). Деталі прогресу читання: `READING_PROGRESS.md`, приклади запитів: `libraryAPI.http`.
 
 ## Матеріали командної роботи
 
 - [Проєктування бази даних](docs/database-design.md) — сутності, зв'язки, ключі та обмеження.
-- [Tasks + Kanban](docs/tasks-kanban.md) — статуси пунктів модуля і подальші командні дії.
+- [Tasks + Kanban](docs/tasks-kanban.md) — локальний checklist і кроки для GitHub Projects.
 - [Git branch workflow](docs/git-workflow.md) — гілки, коміти, review та безпечна інтеграція.
-- [Code review](docs/code-review.md) — результат перевірки feature-коміту і відкритий ризик міграції.
+- [Code review](docs/code-review.md) — локальні findings і умови для peer review.
 - Git-репозиторій містить `main`, `develop` і `feature/validation`. Поточний робочий контекст цього завдання — `feature/validation`; не пушити та не зливати її в `main`.
+
+## Команда
+
+Додайте всіх учасників, їхні ролі та GitHub usernames перед створенням призначених задач у GitHub Projects:
+
+| Учасник | Роль у проєкті | GitHub username |
+|---|---|---|
+| Заповнити командою | Заповнити командою | Заповнити командою |
 
 ## Структура
 

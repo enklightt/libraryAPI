@@ -2,6 +2,8 @@
 
 Base path: `/api/v1`. The API uses JSON request and response bodies unless noted otherwise. Swagger UI is enabled only in the Development environment at `/swagger`.
 
+Route-level XML documentation is maintained next to controller actions and included in the generated Swagger document. It supplies operation summaries, parameter notes, response codes, and examples.
+
 ## Authentication
 
 Send an access token as `Authorization: Bearer <accessToken>` to protected endpoints. Endpoints described as public do not require a token. Role names are `admin`, `manager`, `librarian`, and `customer`; where a role is listed, only the named roles are allowed.

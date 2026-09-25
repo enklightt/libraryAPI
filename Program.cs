@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using LibraryAPI.Data;
+using LibraryAPI.Controllers;
 using LibraryAPI.Middleware;
 using LibraryAPI.Services;
 using LibraryAPI;
@@ -62,7 +63,11 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = Path.ChangeExtension(typeof(BooksController).Assembly.Location, ".xml");
+    options.IncludeXmlComments(xmlFile);
+});
 
 builder.Services.AddCors(options =>
 {

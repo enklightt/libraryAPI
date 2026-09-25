@@ -36,6 +36,14 @@ public class AppDbContext : DbContext
             .HasIndex(rp => new { rp.UserId, rp.BookId })
             .IsUnique();
 
+        modelBuilder.Entity<User>()
+            .HasIndex(user => user.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<Book>()
+            .HasIndex(book => book.Isbn)
+            .IsUnique();
+
         modelBuilder.Entity<Role>().ToTable("roles");
         modelBuilder.Entity<User>().ToTable("users");
         modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens");

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LibraryAPI.Models
 {
@@ -12,6 +13,7 @@ namespace LibraryAPI.Models
         public string Name { get; set; } = null!;
 
         [Column("email")]
+        [MaxLength(254)]
         public string Email { get; set; } = null!;
 
         [Column("password")]

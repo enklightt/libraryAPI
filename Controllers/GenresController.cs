@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryAPI.Controllers
 {
+    /// <summary>Provides the available book genres.</summary>
     [ApiController]
     [Route("api/v1/genres")]
     public class GenresController : ControllerBase
@@ -15,6 +16,9 @@ namespace LibraryAPI.Controllers
             _context = context;
         }
 
+        /// <summary>Lists all genres.</summary>
+        /// <response code="200">The genre identifiers and names.</response>
+        /// <remarks>Example request: <code>GET /api/v1/genres</code>. Example response: <code>[{"id":"genre-guid","name":"History"}]</code></remarks>
         [HttpGet]
         public async Task<IActionResult> GetGenres()
         {

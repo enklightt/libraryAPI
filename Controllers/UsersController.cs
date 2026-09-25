@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibraryAPI.Controllers;
 
+/// <summary>Returns and administers user accounts.</summary>
 [ApiController]
 [Route("api/v1/users")]
 public class UsersController : ControllerBase
@@ -33,6 +34,11 @@ public class UsersController : ControllerBase
         _gamificationService = gamificationService;
     }
 
+    /// <summary>Returns the authenticated user's profile, lists, achievements, and statistics.</summary>
+    /// <response code="200">The current user's profile and summary.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <response code="404">The authenticated user was not found.</response>
+    /// <remarks>Example request: <code>GET /api/v1/users/me</code>. Example response: <code>{"id":"user-guid","name":"Ada Reader","stats":{"finishedBooks":1,"totalPages":200}}</code></remarks>
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
@@ -83,6 +89,13 @@ public class UsersController : ControllerBase
         });
     }
 
+    /// <summary>Sets or clears the authenticated user's equipped title.</summary>
+    /// <param name="body">A JSON object with a title string, or null to clear it.</param>
+    /// <response code="200">The equipped title value.</response>
+    /// <response code="400">The request body is invalid.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <response code="404">The authenticated user was not found.</response>
+    /// <remarks>Example request: <code>{"title":"Bookworm"}</code>. Example response: <code>{"equippedTitle":"Bookworm"}</code></remarks>
     [Authorize]
     [HttpPut("me/title")]
     public async Task<IActionResult> SetTitle([FromBody] JsonElement body)
@@ -103,6 +116,11 @@ public class UsersController : ControllerBase
         return Ok(new { equippedTitle = user.EquippedTitle });
     }
 
+    /// <summary>Lists users for administrative management.</summary>
+    /// <response code="200">The user list.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <response code="403">The caller is not an admin or manager.</response>
+    /// <remarks>Example request: <code>GET /api/v1/users</code>. Example response: <code>[{"id":"user-guid","name":"Ada Reader","email":"ada@example.com"}]</code></remarks>
     [Authorize(Roles = "admin,manager")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -111,6 +129,15 @@ public class UsersController : ControllerBase
         return Ok(result.Data);
     }
 
+    /// <summary>Changes a user's role.</summary>
+    /// <param name="id">The user identifier.</param>
+    /// <param name="roleName">The role name supplied as a JSON string.</param>
+    /// <response code="200">The role was updated.</response>
+    /// <response code="400">The request body is invalid.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <response code="403">The caller is not an admin.</response>
+    /// <response code="404">The user or role was not found.</response>
+    /// <remarks>Example request: <code>PUT /api/v1/users/{id}/role</code> with JSON body <code>"librarian"</code>. Example response: <code>{"message":"Роль оновлено"}</code></remarks>
     [Authorize(Roles = "admin")]
     [HttpPut("{id}/role")]
     public async Task<IActionResult> SetRole(string id, [FromBody] string roleName)
@@ -121,6 +148,13 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Роль оновлено" });
     }
 
+    /// <summary>Enables or disables a user account.</summary>
+    /// <param name="id">The user identifier.</param>
+    /// <response code="200">The active status was toggled.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <response code="403">The caller is not an admin or manager.</response>
+    /// <response code="404">The user was not found.</response>
+    /// <remarks>Example request: <code>PUT /api/v1/users/{id}/toggle-active</code>. Example response: <code>{"message":"Статус оновлено"}</code></remarks>
     [Authorize(Roles = "admin,manager")]
     [HttpPut("{id}/toggle-active")]
     public async Task<IActionResult> ToggleActive(string id)

@@ -1,25 +1,29 @@
 # Tasks + Kanban
 
-Snapshot date: 2026-09-25. This markdown board tracks the Module 1 deliverables for the Library API. The GitHub repository remains the source of truth for branch history and any team review/merge decision.
+Snapshot date: 2026-09-25. This is a local checklist, not a GitHub Projects board. The GitHub repository remains the source of truth for branch history and any team review/merge decision.
 
 | Status | Task | Evidence / acceptance criteria |
 |---|---|---|
-| Done | Git repository | Repository has `main`, `develop`, and `feature/validation` branches and an `origin` remote. |
-| Done | README | Root README documents purpose, stack, setup, existing features, and links to this documentation set. |
-| Done | Tasks + Kanban | This file records status, evidence, and the outstanding team workflow gate. |
-| Done | Database design | [database-design.md](database-design.md) describes entities, relationships, keys, and constraints from the EF model/migrations. |
-| Done | API documentation | [API.md](API.md) lists routes, access rules, inputs, and outcomes from the controllers. |
-| Done | Branches + commits | Work is on `feature/validation`; current branch history includes `66933b3` (`add validation rules for books, DTOs, and chat requests with EF constraints ;-)`) on top of `main`/`develop`. |
-| Review | Code review | [code-review.md](code-review.md) records the local review finding; teammate review and approval are still required before integration. |
-| Blocked | Merge | Resolve/accept the migration finding and agree on a non-`main` integration target first. Do not push or merge this work into `main`. |
+| In Progress | Git repository | Local repository and `origin` exist; branch history includes `main`, `develop`, and `feature/validation`. Adding all team members requires their GitHub usernames and repository-owner access. |
+| In Progress | README and team | Project purpose, structure, dependencies, and startup are documented. Team names, roles, and GitHub usernames still need to be supplied and added by the team. |
+| In Progress | Tasks + Kanban | This file is a local draft only. A linked GitHub Projects board with Todo / In Progress / Review / Done columns is not yet created. |
+| Done | Database design review | [database-design.md](database-design.md) records relationships, constraints, normalization notes, findings, and a read-only migration preflight. Unique email/ISBN indexes are modeled and migration-generated, but not applied. |
+| Done | API documentation | All 50 controller routes have XML summaries/response codes/examples; Swagger includes the generated XML comments. [API.md](API.md) remains the route index. |
+| In Progress | Branches + commits | Current work stays on `feature/validation` by explicit instruction. Existing history includes validation commit `66933b3` and documentation commit `7a025bd`; per-task branches from `develop` and pushes are not performed in this task. |
+| Pending | Learn Git Branching | The local workflow guide is not completion evidence. Each student must complete at least [modules 1–4](https://learngitbranching.js.org/) and record their result. |
+| Review | Code review | [code-review.md](code-review.md) records local findings; one or two teammate reviews through a PR are still required. |
+| Blocked | Merge | Merge to `develop` only after peer approval, database preflight, and authorization to integrate. Never push or merge this work into `main`. |
 
 ## Suggested next cards
 
 | Priority | Task | Acceptance criteria |
 |---|---|---|
-| High | Peer review feature validation | Validate DTO rules, EF constraints, existing-data migration behavior, and regression coverage; resolve or document findings. |
-| High | Confirm integration target | Team agrees whether `develop` is the integration target; keep `main` out of scope. |
-| Medium | Exercise documented API | Run representative requests from `libraryAPI.http` against Development Swagger and correct documentation mismatches. |
+| High | Add team roster and collaborators | Record each member's name, role, and GitHub username in README and grant repository access. |
+| High | Create GitHub Projects board | Link a board to the repository and add Todo, In Progress, Review, and Done columns. |
+| High | Assign team tasks | Create at least two issues per participant and assign them after the roster is confirmed. |
+| High | Complete Learn Git Branching | Each participant completes the first four modules and records evidence. |
+| High | Peer review and integrate | Review the feature PR, resolve findings, run migration preflight, then merge only to approved `develop`. |
+| Medium | Exercise documented API | Run representative requests against Development Swagger and correct documentation mismatches. |
 | Medium | Add automated API tests | Cover validation failures and success cases for book create/update and chat request validation. |
 
 ## Branch workflow
