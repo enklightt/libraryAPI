@@ -6,7 +6,7 @@ Snapshot date: 2026-09-25. This is a local checklist, not a GitHub Projects boar
 |---|---|---|
 | In Progress | Git repository | Local repository and `origin` exist; branch history includes `main`, `develop`, and `feature/validation`. Adding all team members requires their GitHub usernames and repository-owner access. |
 | In Progress | README and team | Project purpose, structure, dependencies, and startup are documented. Team names, roles, and GitHub usernames still need to be supplied and added by the team. |
-| In Progress | Tasks + Kanban | This file is a local draft only. A linked GitHub Projects board with Todo / In Progress / Review / Done columns is not yet created. |
+| Team lead | Tasks + Kanban | No GitHub Projects board was created by this contributor. The team lead owns creating/linking the board, setting Todo / In Progress / Review / Done columns, and assigning at least two tasks per participant. This file is only a written checklist. |
 | Done | Database design review | [database-design.md](database-design.md) records relationships, constraints, normalization notes, findings, and a read-only migration preflight. Unique email/ISBN indexes are modeled and migration-generated, but not applied. |
 | Done | API documentation | All 50 controller routes have XML summaries/response codes/examples; Swagger includes the generated XML comments. [API.md](API.md) remains the route index. |
 | In Progress | Branches + commits | Current work stays on `feature/validation` by explicit instruction. Existing history includes validation commit `66933b3` and documentation commit `7a025bd`; per-task branches from `develop` and pushes are not performed in this task. |
@@ -18,9 +18,9 @@ Snapshot date: 2026-09-25. This is a local checklist, not a GitHub Projects boar
 
 | Priority | Task | Acceptance criteria |
 |---|---|---|
-| High | Add team roster and collaborators | Record each member's name, role, and GitHub username in README and grant repository access. |
-| High | Create GitHub Projects board | Link a board to the repository and add Todo, In Progress, Review, and Done columns. |
-| High | Assign team tasks | Create at least two issues per participant and assign them after the roster is confirmed. |
+| Team lead | Add team roster and collaborators | Record each member's name, role, and GitHub username in README and grant repository access. |
+| Team lead | Create GitHub Projects board | Link a board to the repository and add Todo, In Progress, Review, and Done columns. |
+| Team lead | Assign team tasks | Create at least two issues per participant and assign them after the roster is confirmed. |
 | High | Complete Learn Git Branching | Each participant completes the first four modules and records evidence. |
 | High | Peer review and integrate | Review the feature PR, resolve findings, run migration preflight, then merge only to approved `develop`. |
 | Medium | Exercise documented API | Run representative requests against Development Swagger and correct documentation mismatches. |
@@ -28,4 +28,4 @@ Snapshot date: 2026-09-25. This is a local checklist, not a GitHub Projects boar
 
 ## Branch workflow
 
-Current assignment branch: `feature/validation`. Keep changes for this task on that branch. Follow [git-workflow.md](git-workflow.md) for branch/commit commands. Use a pull request with review before integration; never push directly to `main`. This task does not switch branches, push commits, or perform a merge.
+Current assignment branch: `feature/validation`. Keep changes for this task on that branch. Follow [git-workflow.md](git-workflow.md) for branch/commit commands. Use a pull request with review; per team instruction, do not merge branches. Never push directly to `main`. This task does not switch branches or merge any branch.
