@@ -46,6 +46,13 @@ dotnet ef database update
 dotnet run
 ```
 
+### Чекліст для бази даних
+
+- Перед першим запуском створіть базу `library_db` у MySQL.
+- Після змін моделей або міграцій запускайте `dotnet ef database update`.
+- Якщо БД недоступна, health check поверне стан `Degraded` через `/health`.
+- Для локального розроблення допустимо використовувати `root`, але в проді потрібен окремий користувач з мінімальними правами.
+
 URLs (див. `Properties/launchSettings.json`): `https://localhost:7043`, `http://localhost:5043`. Swagger: `https://localhost:7043/swagger`. Фронт: `https://localhost:7043/` (`UseDefaultFiles + UseStaticFiles`).
 
 ### Конфіг `appsettings.json`
