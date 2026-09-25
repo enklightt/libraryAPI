@@ -123,7 +123,15 @@ GET  api/v1/users (admin,manager) | PUT {id}/role (admin) | PUT {id}/toggle-acti
 GET  api/v1/genres
 ```
 
-Деталі: `READING_PROGRESS.md`, Swagger, `libraryAPI.http`.
+Повний перелік маршрутів і контрактів: [docs/API.md](docs/API.md). Деталі прогресу читання: `READING_PROGRESS.md`, Swagger у Development, приклади запитів: `libraryAPI.http`.
+
+## Матеріали командної роботи
+
+- [Проєктування бази даних](docs/database-design.md) — сутності, зв'язки, ключі та обмеження.
+- [Tasks + Kanban](docs/tasks-kanban.md) — статуси пунктів модуля і подальші командні дії.
+- [Git branch workflow](docs/git-workflow.md) — гілки, коміти, review та безпечна інтеграція.
+- [Code review](docs/code-review.md) — результат перевірки feature-коміту і відкритий ризик міграції.
+- Git-репозиторій містить `main`, `develop` і `feature/validation`. Поточний робочий контекст цього завдання — `feature/validation`; не пушити та не зливати її в `main`.
 
 ## Структура
 
