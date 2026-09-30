@@ -4,35 +4,34 @@ namespace LibraryAPI.DTOs
 {
     public class CreateBookDto
     {
-        [Required(ErrorMessage = "Назва книги обов'язкова")]
-        [StringLength(255, MinimumLength = 2, ErrorMessage = "Назва має бути від 2 до 255 символів")]
-        public string Title { get; set; } = null!;
+        [Required(ErrorMessage = "Назва книги є обов'язковою.")]
+        [StringLength(200, MinimumLength = 1, ErrorMessage = "Назва має містити від 1 до 200 символів.")]
+        public string Title { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Автор обов'язковий")]
-        [StringLength(150, MinimumLength = 2, ErrorMessage = "Ім'я автора має бути від 2 до 150 символів")]
-        public string Author { get; set; } = null!;
+        [Required(ErrorMessage = "Ім'я автора є обов'язковим.")]
+        [StringLength(100, ErrorMessage = "Ім'я автора не повинно перевищувати 100 символів.")]
+        public string Author { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "ISBN обов'язковий")]
-        [StringLength(20, MinimumLength = 10, ErrorMessage = "ISBN має бути від 10 до 20 символів")]
-        public string Isbn { get; set; } = null!;
+        [Required(ErrorMessage = "Поле ISBN є обов'язковим.")]
+        [StringLength(20, MinimumLength = 10, ErrorMessage = "ISBN має бути від 10 до 20 символів.")]
+        public string Isbn { get; set; } = string.Empty;
+
+        [Range(1000, 2026, ErrorMessage = "Введіть дійсний рік видання.")]
+        public int Year { get; set; }
+
+        [Range(0.01, 10000.00, ErrorMessage = "Ціна має бути більшою за нуль.")]
+        public decimal Price { get; set; }
 
         public string? GenreId { get; set; }
 
-        [Range(1, 1000, ErrorMessage = "Кількість примірників має бути від 1 до 1000")]
-        public int TotalCopies { get; set; }
-
-        [StringLength(500, ErrorMessage = "Посилання на файл занадто довге")]
-        public string? PdfUrl { get; set; }
-
-        public string? Quote { get; set; }
-
-        [Range(1, 100000, ErrorMessage = "Кількість сторінок має бути від 1 до 100000")]
-        public int? Pages { get; set; }
-
-        public string? ImageUrl { get; set; }
-
-        public int? GutenbergId { get; set; }
+        [Range(1, 10000, ErrorMessage = "Кількість копій має бути від 1 до 10000.")]
+        public int TotalCopies { get; set; } = 1;
 
         public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? PdfUrl { get; set; }
+        public string? Quote { get; set; }
+        public int? Pages { get; set; }
+        public int? GutenbergId { get; set; }
     }
 }
