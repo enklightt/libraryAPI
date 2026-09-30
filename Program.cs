@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using LibraryAPI.Data;
-using LibraryAPI.Interfaces;
 using LibraryAPI.Middleware;
 using LibraryAPI.Services;
 using LibraryAPI;
@@ -105,7 +104,6 @@ builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IBookTextService, BookTextService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IBookChatService, BookChatService>();
-builder.Services.AddScoped<IBookPdfService, BookPdfService>();
 
 var app = builder.Build();
 

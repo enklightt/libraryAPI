@@ -1,6 +1,6 @@
 ﻿using LibraryAPI.DTOs;
 
-namespace LibraryAPI.Interfaces
+namespace LibraryAPI.Services
 {
     public interface IAuthService
     {

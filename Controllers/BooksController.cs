@@ -1,5 +1,4 @@
 ﻿using LibraryAPI.DTOs;
-using LibraryAPI.Interfaces;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ namespace LibraryAPI.Controllers
         private readonly IBookService _bookService;
         private readonly IBookTextService _bookTextService;
         private readonly IBookChatService _bookChatService;
-        private readonly IBookPdfService _bookPdfService;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public BooksController(
             IBookService bookService,
@@ -240,6 +239,7 @@ namespace LibraryAPI.Controllers
         public async Task<ActionResult> GetBookPdf(string id)
         {
             var book = await _bookService.GetByIdAsync(id);
+
             if (book == null)
                 return NotFound(new { message = "Книгу не знайдено" });
 
