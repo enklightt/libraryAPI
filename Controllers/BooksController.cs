@@ -52,13 +52,6 @@ namespace LibraryAPI.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Отримує книгу за її ідентифікатором.
-        /// </summary>
-        /// <param name="id">Ідентифікатор книги.</param>
-        /// <returns>Дані книги.</returns>
-        /// <response code="200">Книгу успішно знайдено.</response>
-        /// <response code="404">Книгу не знайдено.</response>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(BookResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
