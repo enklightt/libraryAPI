@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LibraryAPI.Data;
+using LibraryAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryAPI.Services;
