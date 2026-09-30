@@ -104,6 +104,7 @@ builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IBookTextService, BookTextService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IBookChatService, BookChatService>();
+builder.Services.AddScoped<IBookPdfService, BookPdfService>();
 
 var app = builder.Build();
 
