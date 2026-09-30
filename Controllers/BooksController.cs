@@ -39,9 +39,6 @@ namespace LibraryAPI.Controllers
         /// <param name="sortOrder">Порядок сортування: "asc" або "desc". За замовчуванням: "asc".</param>
         /// <returns>Сторінкова відповідь зі списком книг.</returns>
         /// <response code="200">Список книг успішно отримано.</response>
-            _bookPdfService = bookPdfService;
-        }
-
         [HttpGet]
         [ProducesResponseType(typeof(PagedResponse<BookResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResponse<BookResponseDto>>> GetBooks(
