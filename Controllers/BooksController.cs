@@ -19,12 +19,12 @@ namespace LibraryAPI.Controllers
         private readonly IBookChatService _bookChatService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public BooksController(IBookService bookService, IBookTextService bookTextService, IBookChatService bookChatService, IBookPdfService bookPdfService)
+        public BooksController(IBookService bookService, IBookTextService bookTextService, IBookChatService bookChatService, IHttpClientFactory httpClientFactory)
         {
             _bookService = bookService;
             _bookTextService = bookTextService;
             _bookChatService = bookChatService;
-            _bookPdfService = bookPdfService;
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
@@ -238,11 +238,50 @@ namespace LibraryAPI.Controllers
 
             if (book == null)
                 return NotFound(new { message = "Книгу не знайдено" });
-            var result = await _bookPdfService.GetPdfStreamAsync(book.PdfUrl);
-            if (!result.Success || result.Stream == null)
-                return NotFound(new { message = result.Error });
-            Response.Headers["Content-Disposition"] = "inline";
-            return File(result.Stream, "application/pdf");
+
+            if (string.IsNullOrEmpty(book.PdfUrl))
+                return NotFound(new { message = "PDF файл недоступний для цієї книги" });
+
+            if (System.IO.File.Exists(book.PdfUrl))
+            {
+                var fileStream = System.IO.File.OpenRead(book.PdfUrl);
+                Response.Headers["Content-Disposition"] = "inline";
+                return File(fileStream, "application/pdf");
+            }
+
+            if (book.PdfUrl.StartsWith("/"))
+            {
+                var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var filePath = Path.Combine(wwwrootPath, book.PdfUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+                if (System.IO.File.Exists(filePath))
+                {
+                    var fileStream = System.IO.File.OpenRead(filePath);
+                    Response.Headers["Content-Disposition"] = "inline";
+                    return File(fileStream, "application/pdf");
+                }
+                else
+                {
+                    return NotFound(new { message = $"PDF файл не знайдено за шляхом: {book.PdfUrl}" });
+                }
+            }
+
+            if (Uri.TryCreate(book.PdfUrl, UriKind.Absolute, out var uri))
+            {
+                var httpClient = _httpClientFactory.CreateClient();
+                try
+                {
+                    var pdfBytes = await httpClient.GetByteArrayAsync(uri);
+                    Response.Headers["Content-Disposition"] = "inline";
+                    return File(pdfBytes, "application/pdf");
+                }
+                catch (HttpRequestException)
+                {
+                    return NotFound(new { message = "Не вдалося завантажити PDF файл" });
+                }
+            }
+
+            return NotFound(new { message = "Невірний шлях до PDF файлу" });
         }
 
         [Authorize]
