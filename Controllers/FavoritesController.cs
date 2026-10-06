@@ -17,6 +17,11 @@ public class FavoritesController : ControllerBase
         _favoriteService = favoriteService;
     }
 
+    /// <summary>Повертає список улюблених книг поточного користувача.</summary>
+    /// <response code="200">Список улюблених книг повернуто.</response>
+    /// <response code="401">Потрібна автентифікація.</response>
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [HttpGet]
     public async Task<IActionResult> GetMyFavorites()
     {
@@ -29,6 +34,14 @@ public class FavoritesController : ControllerBase
         return Ok(favorites);
     }
 
+    /// <summary>Додає книгу до улюблених поточного користувача.</summary>
+    /// <param name="bookId">Ідентифікатор книги.</param>
+    /// <response code="200">Книгу додано до улюблених.</response>
+    /// <response code="400">Книгу не вдалося додати.</response>
+    /// <response code="401">Потрібна автентифікація.</response>
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [HttpPost("{bookId}")]
     public async Task<IActionResult> AddToFavorites(string bookId)
     {
@@ -45,6 +58,14 @@ public class FavoritesController : ControllerBase
         return Ok(new { message = "Книгу додано до улюблених" });
     }
 
+    /// <summary>Видаляє книгу з улюблених поточного користувача.</summary>
+    /// <param name="bookId">Ідентифікатор книги.</param>
+    /// <response code="200">Книгу видалено з улюблених.</response>
+    /// <response code="404">Книгу в улюблених не знайдено.</response>
+    /// <response code="401">Потрібна автентифікація.</response>
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [HttpDelete("{bookId}")]
     public async Task<IActionResult> RemoveFromFavorites(string bookId)
     {
@@ -61,6 +82,12 @@ public class FavoritesController : ControllerBase
         return Ok(new { message = "Книгу видалено з улюблених" });
     }
 
+    /// <summary>Перевіряє, чи є книга в улюблених поточного користувача.</summary>
+    /// <param name="bookId">Ідентифікатор книги.</param>
+    /// <response code="200">Повернуто результат перевірки.</response>
+    /// <response code="401">Потрібна автентифікація.</response>
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [HttpGet("check/{bookId}")]
     public async Task<IActionResult> CheckIsFavorite(string bookId)
     {
