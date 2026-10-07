@@ -20,7 +20,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="9.0.0" />
-		<PackageReference Include="Microsoft.OpenApi" Version="2.4.1" />
+		<PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
 	</ItemGroup>
@@ -29,5 +29,12 @@
 	<ItemGroup>
     <None Include="wwwroot\index.html" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="libraryAPI.Tests/**/*.cs" />
+		<Content Remove="libraryAPI.Tests/**" />
+		<EmbeddedResource Remove="libraryAPI.Tests/**" />
+		<None Remove="libraryAPI.Tests/**" />
+	</ItemGroup>
 
 </Project>
