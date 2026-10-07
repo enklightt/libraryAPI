@@ -21,11 +21,15 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="9.0.0" />
+<<<<<<< HEAD
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
 		<PackageReference Include="Microsoft.OpenApi" Version="2.4.1" />
 		<PackageReference Include="Moq" Version="4.21.0" />
 		<PackageReference Include="NUnit" Version="5.0.0" />
 		<PackageReference Include="NUnit3TestAdapter" Version="6.3.0" />
+=======
+		<PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+>>>>>>> 9f2de03 (test: complete automated testing module)
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
 	</ItemGroup>
@@ -36,9 +40,16 @@
   </ItemGroup>
 
 	<ItemGroup>
+<<<<<<< HEAD
 	  <Compile Remove="LibraryAPI.IntegrationTests\**\*.cs" />
 	  <EmbeddedResource Remove="LibraryAPI.IntegrationTests\**\*.cs" />
 	  <None Remove="LibraryAPI.IntegrationTests\**\*.cs" />
+=======
+		<Compile Remove="libraryAPI.Tests/**/*.cs" />
+		<Content Remove="libraryAPI.Tests/**" />
+		<EmbeddedResource Remove="libraryAPI.Tests/**" />
+		<None Remove="libraryAPI.Tests/**" />
+>>>>>>> 9f2de03 (test: complete automated testing module)
 	</ItemGroup>
 
 </Project>
