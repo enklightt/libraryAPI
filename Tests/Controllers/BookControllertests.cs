@@ -129,5 +129,101 @@ namespace LibraryAPI.Tests.Controllers
                 s => s.GetAllAsync(page, pageSize, search, genreId, sortBy, sortOrder),
                 Times.Once);
         }
+
+        /// <summary>
+        /// Перевіряє, що CreateBook повертає 409 Conflict, коли сервіс повертає помилку.
+        /// </summary>
+        [Test]
+        public async Task CreateBook_ShouldReturnConflict_WhenServiceReturnsFailure()
+        {
+            // Arrange
+            var dto = new CreateBookDto
+            {
+                Title = "Кобзар",
+                Author = "Тарас Шевченко"
+            };
+
+            _bookServiceMock
+                .Setup(s => s.CreateAsync(dto))
+                .ReturnsAsync((false, "Книга з такою назвою вже існує", (BookResponseDto?)null));
+
+            // Act
+            var result = await _controller.CreateBook(dto);
+
+            // Assert
+            Assert.That(result.Result, Is.InstanceOf<ConflictObjectResult>());
+
+            var conflictResult = result.Result as ConflictObjectResult;
+            Assert.That(conflictResult, Is.Not.Null);
+
+            _bookServiceMock.Verify(s => s.CreateAsync(dto), Times.Once);
+        }
+
+        /// <summary>
+        /// Перевіряє, що UpdateBook повертає 404 NotFound, коли книгу не знайдено.
+        /// </summary>
+        [Test]
+        public async Task UpdateBook_ShouldReturnNotFound_WhenBookDoesNotExist()
+        {
+            // Arrange
+            var bookId = "non-existent-id";
+            var dto = new UpdateBookDto { Title = "Нова назва" };
+
+            _bookServiceMock
+                .Setup(s => s.UpdateAsync(bookId, dto))
+                .ReturnsAsync((false, "Книгу не знайдено"));
+
+            // Act
+            var result = await _controller.UpdateBook(bookId, dto);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+
+            _bookServiceMock.Verify(s => s.UpdateAsync(bookId, dto), Times.Once);
+        }
+
+        /// <summary>
+        /// Перевіряє, що DeleteBook повертає 404 NotFound, коли книгу не знайдено.
+        /// </summary>
+        [Test]
+        public async Task DeleteBook_ShouldReturnNotFound_WhenBookDoesNotExist()
+        {
+            // Arrange
+            var bookId = "non-existent-id";
+
+            _bookServiceMock
+                .Setup(s => s.DeleteAsync(bookId))
+                .ReturnsAsync((false, "Книгу не знайдено"));
+
+            // Act
+            var result = await _controller.DeleteBook(bookId);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+
+            _bookServiceMock.Verify(s => s.DeleteAsync(bookId), Times.Once);
+        }
+
+        /// <summary>
+        /// Перевіряє, що AskAboutBook повертає 400 BadRequest, коли питання порожнє.
+        /// </summary>
+        [Test]
+        public async Task AskAboutBook_ShouldReturnBadRequest_WhenQuestionIsEmpty()
+        {
+            // Arrange
+            var bookId = "book-123";
+            var request = new ChatRequest { Question = "   " }; // порожнє / пробіли
+
+            // Act
+            var result = await _controller.AskAboutBook(bookId, request);
+
+            // Assert
+            Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
+
+            // Сервіс чату не повинен викликатися
+            _bookChatServiceMock.Verify(
+                s => s.AskAboutBookAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()),
+                Times.Never);
+        }
     }
 }
