@@ -35,4 +35,10 @@
     <None Include="wwwroot\index.html" />
   </ItemGroup>
 
+	<ItemGroup>
+	  <Compile Remove="LibraryAPI.IntegrationTests\**\*.cs" />
+	  <EmbeddedResource Remove="LibraryAPI.IntegrationTests\**\*.cs" />
+	  <None Remove="LibraryAPI.IntegrationTests\**\*.cs" />
+	</ItemGroup>
+
 </Project>
