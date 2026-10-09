@@ -220,7 +220,6 @@ namespace LibraryAPI.Tests.Controllers
             // Assert
             Assert.That(result, Is.InstanceOf<BadRequestObjectResult>());
 
-            // Сервіс чату не повинен викликатися
             _bookChatServiceMock.Verify(
                 s => s.AskAboutBookAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()),
                 Times.Never);
