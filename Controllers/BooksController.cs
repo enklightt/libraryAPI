@@ -1,4 +1,4 @@
-﻿using LibraryAPI.DTOs;
+using LibraryAPI.DTOs;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +17,7 @@ namespace LibraryAPI.Controllers
         private readonly IBookService _bookService;
         private readonly IBookTextService _bookTextService;
         private readonly IBookChatService _bookChatService;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IBookPdfService _bookPdfService;
 
         public BooksController(IBookService bookService, IBookTextService bookTextService, IBookChatService bookChatService, IBookPdfService bookPdfService)
         {
