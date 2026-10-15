@@ -1,8 +1,5 @@
 <Solution>
   <Project Path="libraryAPI.csproj" />
-<<<<<<< HEAD
   <Project Path="LibraryAPI.IntegrationTests/LibraryAPI.IntegrationTests.csproj" />
-=======
   <Project Path="libraryAPI.Tests/libraryAPI.Tests.csproj" />
->>>>>>> 9f2de03 (test: complete automated testing module)
 </Solution>

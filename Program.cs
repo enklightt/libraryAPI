@@ -141,9 +141,5 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();
-<<<<<<< HEAD
-public partial class Program { }
-=======
 
 public partial class Program { }
->>>>>>> 9f2de03 (test: complete automated testing module)
