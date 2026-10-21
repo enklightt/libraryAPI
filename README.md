@@ -2,7 +2,7 @@
 
 REST API для онлайн-бібліотеки: каталог книг, читання PDF/текстів, прогрес читання, відгуки, вибране, «хочу прочитати», гейміфікація, друзі, AI-чат про книгу (Groq). + статичний фронтенд `wwwroot/index.html` (LibraFlow).
 
-База: `api/v1/...`, Swagger в Development.
+База: `api/v1/...` та `api/v2/books`, Swagger в Development.
 
 ## Можливості
 
@@ -31,12 +31,12 @@ cd libraryAPI
 mysql -u root -p -e "CREATE DATABASE library_db CHARACTER SET utf8mb4;"
 
 # 2. Конфігурація (НЕ кладіть секрети в appsettings.json)
-dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=127.0.0.1;Port=3306;Database=library_db;User=lib_user;Password=***"
-dotnet user-secrets set "JwtSettings:Secret" "<мінімум 32 символи, 256 біт>"
-dotnet user-secrets set "GroqSettings:ApiKey" "<gsk_...>"
+cp .env.example .env
+# відредагуйте .env: ConnectionStrings__DefaultConnection,
+# JwtSettings__Secret (мінімум 32 символи), GroqSettings__ApiKey
 
-# або через env:
+# .env автоматично завантажується через DotNetEnv.
+# Альтернатива для CI/prod — змінні середовища ASP.NET Core:
 # ConnectionStrings__DefaultConnection, JwtSettings__Secret, GroqSettings__ApiKey
 
 # 3. Міграції
@@ -55,15 +55,57 @@ dotnet run
 
 URLs (див. `Properties/launchSettings.json`): `https://localhost:7043`, `http://localhost:5043`. Swagger: `https://localhost:7043/swagger`. Фронт: `https://localhost:7043/` (`UseDefaultFiles + UseStaticFiles`).
 
-### Конфіг `appsettings.json`
+### Конфіг
 
-```json
-{
-  "ConnectionStrings": { "DefaultConnection": "Server=...;Database=library_db;User=...;Password=...;" },
-  "JwtSettings": { "Secret": "...", "AccessTokenExpiryMinutes": 60, "RefreshTokenExpiryDays": 7 },
-  "GroqSettings": { "ApiKey": "...", "Model": "llama-3.3-70b-versatile" }
-}
+Секрети зберігаються лише в `.env` (файл у `.gitignore`) або в env-змінних.
+`appsettings.json` містить безпечні defaults: CORS origins, TTL кешу, ліміти
+rate limiting, параметри resilience.
+
+```bash
+# .env (приклад)
+ConnectionStrings__DefaultConnection=Server=127.0.0.1;Port=3306;Database=library_db;User=lib_user;Password=***
+JwtSettings__Secret=<random 32+ chars>
+GroqSettings__ApiKey=gsk_***
 ```
+
+> **Безпека:** якщо секрети колись потрапляли в Git-історію — змініть пароль
+> БД, JWT secret і ключ Groq. Історію можна почистити `git filter-repo`, але це
+> окрема операція з командою.
+
+## Module 3 — якість, продуктивність, безпека
+
+| Задача | Стан | Де дивитися |
+|---|---|---|
+| SonarQube | ✅ 0 bugs, 0 vulnerabilities, 0 debt, coverage 34.4% | `sonarqube-report.md`, `sonar-project.properties` |
+| Рефакторинг | ✅ сервіси/DTO/константи/exception middleware | `refactoring-report.md` |
+| Performance Testing | 🤝 тіммейт | `TEAMMATE-TASKS.md` |
+| Profiling | 🤝 тіммейт | `TEAMMATE-TASKS.md` |
+| Оптимізація БД | 🤝 тіммейт | `TEAMMATE-TASKS.md` |
+| Reliability | ✅ timeout/retry/circuit breaker, `/health`, безпечні помилки | `Infrastructure/HttpClientExtensions.cs`, `Middleware/ExceptionMiddleware.cs` |
+| Захист API | ✅ access control для друзів, path traversal guard, CORS allow-list, валідація DTO | `Services/FriendService.cs`, `Services/BookPdfService.cs` |
+| API Versioning | ✅ `api/v1`, `api/v2/books`, `api-supported-versions`, Swagger v1/v2 | `Controllers/BooksV2Controller.cs`, `Program.cs` |
+| Rate Limiting | ✅ 10/хв auth, 60/хв write, `Retry-After` | `Program.cs`, `Infrastructure/RateLimitKeyProvider.cs` |
+| Caching | ✅ IMemoryCache + `X-Cache`, TTL, інвалідація | `Services/BookService.cs`, `Services/GenreService.cs` |
+| `.env` | ✅ DotNetEnv, `.env.example`, секрети прибрано з appsettings | `.env.example`, `Program.cs` |
+
+### Корисні команди
+
+```bash
+dotnet build
+dotnet test
+
+# покриття + Sonar
+dotnet test --settings coverlet.runsettings \
+  --collect:"XPlat Code Coverage" --results-directory TestResults
+dotnet-sonarscanner begin /k:"libraryAPI" \
+  /d:sonar.host.url="http://localhost:9000" /d:sonar.token="$SONAR_TOKEN" \
+  /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml"
+dotnet build && dotnet test --no-build
+dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+```
+
+Rate limiting вимкнений у середовищі `Testing`, тому інтеграційні тести не
+залежать від лімітів. У Development ліміти активні.
 
 ## База даних (MySQL 8.0, EF Core, `Data/AppDbContext.cs`)
 
