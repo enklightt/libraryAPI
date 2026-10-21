@@ -1,4 +1,7 @@
-﻿using LibraryAPI.DTOs;
+﻿using Asp.Versioning;
+using LibraryAPI.DTOs;
+using LibraryAPI.Infrastructure;
+using LibraryAPI.Models;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +13,8 @@ namespace LibraryAPI.Controllers
     /// Контролер для роботи з книгами: CRUD, завантаження PDF, отримання тексту та чат з книгою.
     /// </summary>
     [ApiController]
-    [Route("api/v1/books")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/books")]
     [Produces(MediaTypeNames.Application.Json)]
     public class BooksController : ControllerBase
     {
@@ -18,13 +22,20 @@ namespace LibraryAPI.Controllers
         private readonly IBookTextService _bookTextService;
         private readonly IBookChatService _bookChatService;
         private readonly IBookPdfService _bookPdfService;
+        private readonly RequestCacheStatus _cacheStatus;
 
-        public BooksController(IBookService bookService, IBookTextService bookTextService, IBookChatService bookChatService, IHttpClientFactory httpClientFactory)
+        public BooksController(
+            IBookService bookService,
+            IBookTextService bookTextService,
+            IBookChatService bookChatService,
+            IBookPdfService bookPdfService,
+            RequestCacheStatus cacheStatus)
         {
             _bookService = bookService;
             _bookTextService = bookTextService;
             _bookChatService = bookChatService;
-            _httpClientFactory = httpClientFactory;
+            _bookPdfService = bookPdfService;
+            _cacheStatus = cacheStatus;
         }
 
         /// <summary>
@@ -41,14 +52,15 @@ namespace LibraryAPI.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(PagedResponse<BookResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PagedResponse<BookResponseDto>>> GetBooks(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20,
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, 100)] int pageSize = 20,
             [FromQuery] string? search = null,
             [FromQuery] string? genreId = null,
             [FromQuery] string? sortBy = null,
             [FromQuery] string sortOrder = "asc")
         {
             var result = await _bookService.GetAllAsync(page, pageSize, search, genreId, sortBy, sortOrder);
+            Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
             return Ok(result);
         }
 
@@ -69,6 +81,7 @@ namespace LibraryAPI.Controllers
             if (book == null)
                 return NotFound(new { message = "Книгу не знайдено" });
 
+            Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
             return Ok(book);
         }
 
@@ -84,7 +97,7 @@ namespace LibraryAPI.Controllers
         /// <response code="409">Конфлікт (наприклад, книга з такою назвою вже існує).</response>
         /// <response code="401">Користувач не авторизований.</response>
         /// <response code="403">Недостатньо прав доступу.</response>
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = RoleNames.AdminOrManager)]
         [HttpPost]
         [ProducesResponseType(typeof(BookResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -114,7 +127,7 @@ namespace LibraryAPI.Controllers
         /// <response code="409">Конфлікт під час оновлення.</response>
         /// <response code="401">Користувач не авторизований.</response>
         /// <response code="403">Недостатньо прав доступу.</response>
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = RoleNames.AdminOrManager)]
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -147,7 +160,7 @@ namespace LibraryAPI.Controllers
         /// <response code="404">Книгу не знайдено.</response>
         /// <response code="401">Користувач не авторизований.</response>
         /// <response code="403">Недостатньо прав доступу.</response>
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = RoleNames.AdminOrManager)]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -177,7 +190,7 @@ namespace LibraryAPI.Controllers
         /// <response code="400">Помилка валідації файлу або книги.</response>
         /// <response code="401">Користувач не авторизований.</response>
         /// <response code="403">Недостатньо прав доступу.</response>
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = RoleNames.AdminOrManager)]
         [HttpPost("{id}/pdf")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -229,7 +242,6 @@ namespace LibraryAPI.Controllers
         /// <response code="200">PDF-файл успішно повернуто.</response>
         /// <response code="404">Книгу або PDF-файл не знайдено.</response>
         [HttpGet("{id}/pdf")]
-        [Produces("application/pdf")]
         [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetBookPdf(string id)
@@ -242,46 +254,13 @@ namespace LibraryAPI.Controllers
             if (string.IsNullOrEmpty(book.PdfUrl))
                 return NotFound(new { message = "PDF файл недоступний для цієї книги" });
 
-            if (System.IO.File.Exists(book.PdfUrl))
-            {
-                var fileStream = System.IO.File.OpenRead(book.PdfUrl);
-                Response.Headers["Content-Disposition"] = "inline";
-                return File(fileStream, "application/pdf");
-            }
+            var pdfResult = await _bookPdfService.GetPdfStreamAsync(book.PdfUrl);
 
-            if (book.PdfUrl.StartsWith("/"))
-            {
-                var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-                var filePath = Path.Combine(wwwrootPath, book.PdfUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (!pdfResult.Success || pdfResult.Stream == null)
+                return NotFound(new { message = pdfResult.Error });
 
-                if (System.IO.File.Exists(filePath))
-                {
-                    var fileStream = System.IO.File.OpenRead(filePath);
-                    Response.Headers["Content-Disposition"] = "inline";
-                    return File(fileStream, "application/pdf");
-                }
-                else
-                {
-                    return NotFound(new { message = $"PDF файл не знайдено за шляхом: {book.PdfUrl}" });
-                }
-            }
-
-            if (Uri.TryCreate(book.PdfUrl, UriKind.Absolute, out var uri))
-            {
-                var httpClient = _httpClientFactory.CreateClient();
-                try
-                {
-                    var pdfBytes = await httpClient.GetByteArrayAsync(uri);
-                    Response.Headers["Content-Disposition"] = "inline";
-                    return File(pdfBytes, "application/pdf");
-                }
-                catch (HttpRequestException)
-                {
-                    return NotFound(new { message = "Не вдалося завантажити PDF файл" });
-                }
-            }
-
-            return NotFound(new { message = "Невірний шлях до PDF файлу" });
+            Response.Headers.ContentDisposition = "inline";
+            return File(pdfResult.Stream, "application/pdf");
         }
 
         [Authorize]
@@ -292,9 +271,6 @@ namespace LibraryAPI.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult> AskAboutBook(string id, [FromBody] ChatRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Question))
-                return BadRequest(new { message = "Введіть питання" });
-
             var answer = await _bookChatService.AskAboutBookAsync(id, request.Question, request.CurrentPage);
 
             if (answer == null)
@@ -326,17 +302,9 @@ namespace LibraryAPI.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task AskAboutBookStream(string id, [FromBody] ChatRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Question))
-            {
-                Response.ContentType = "text/event-stream";
-                await Response.WriteAsync("data: {\"error\":\"Введіть питання\"}\n\n");
-                await Response.Body.FlushAsync();
-                return;
-            }
-
             Response.ContentType = "text/event-stream";
-            Response.Headers["Cache-Control"] = "no-cache";
-            Response.Headers["Connection"] = "keep-alive";
+            Response.Headers.CacheControl = "no-cache";
+            Response.Headers.Connection = "keep-alive";
             Response.Headers["X-Accel-Buffering"] = "no";
 
             var started = false;
@@ -355,23 +323,5 @@ namespace LibraryAPI.Controllers
 
             await Response.Body.FlushAsync();
         }
-    }
-
-    /// <summary>
-    /// Запит для чату з книгою.
-    /// </summary>
-    public class ChatRequest
-    {
-        /// <summary>
-        /// Текст питання до книги.
-        /// </summary>
-        /// <example>Про що ця книга?</example>
-        public string Question { get; set; } = "";
-
-        /// <summary>
-        /// Номер поточної сторінки (опціонально), щоб відповідь була більш контекстною.
-        /// </summary>
-        /// <example>42</example>
-        public int? CurrentPage { get; set; }
     }
 }

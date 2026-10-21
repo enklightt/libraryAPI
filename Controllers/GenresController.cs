@@ -1,31 +1,29 @@
-using LibraryAPI.Data;
+using Asp.Versioning;
+using LibraryAPI.Infrastructure;
+using LibraryAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LibraryAPI.Controllers
 {
     [ApiController]
-    [Route("api/v1/genres")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/genres")]
     public class GenresController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IGenreService _genreService;
+        private readonly RequestCacheStatus _cacheStatus;
 
-        public GenresController(AppDbContext context)
+        public GenresController(IGenreService genreService, RequestCacheStatus cacheStatus)
         {
-            _context = context;
+            _genreService = genreService;
+            _cacheStatus = cacheStatus;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetGenres()
         {
-            var genres = await _context.Genres
-                .Select(g => new
-                {
-                    g.Id,
-                    g.Name
-                })
-                .ToListAsync();
-
+            var genres = await _genreService.GetGenresAsync();
+            Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
             return Ok(genres);
         }
     }

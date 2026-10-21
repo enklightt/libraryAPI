@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using System.Security.Claims;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -6,7 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace LibraryAPI.Controllers;
 
 [ApiController]
-[Route("api/v1/favorites")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/favorites")]
 [Authorize]
 public class FavoritesController : ControllerBase
 {

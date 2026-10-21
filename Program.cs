@@ -130,8 +130,15 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API для роботи з бібліотекою книг"
     });
+    c.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Title = "Library API",
+        Version = "v2",
+        Description = "Друга версія API з уніфікованою структурою відповіді"
+    });
+    c.DocInclusionPredicate((documentName, apiDescription) =>
+        apiDescription.GroupName == documentName);
 
-    // Підключення XML-коментарів
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -197,15 +204,27 @@ app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Library API v1");
+        c.SwaggerEndpoint("/swagger/v2/swagger.json", "Library API v2");
+    });
+}
+else
+{
+    app.UseHttpsRedirection();
 }
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-app.UseCors("AllowAll");
+app.UseRouting();
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapHealthChecks("/health");
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
+
+public partial class Program { }

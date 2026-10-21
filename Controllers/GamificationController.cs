@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using System.Security.Claims;
 using LibraryAPI.DTOs;
 using LibraryAPI.Services;
@@ -7,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace LibraryAPI.Controllers;
 
 [ApiController]
-[Route("api/v1/gamification")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/gamification")]
 [Authorize]
 public class GamificationController : ControllerBase
 {

@@ -1,5 +1,7 @@
+using Asp.Versioning;
 using System.Security.Claims;
 using LibraryAPI.DTOs;
+using LibraryAPI.Models;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace LibraryAPI.Controllers;
 
 [ApiController]
-[Route("api/v1/books/{bookId}/reviews")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/books/{bookId}/reviews")]
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviewService;
@@ -59,7 +62,7 @@ public class ReviewsController : ControllerBase
         return Ok(reviews);
     }
 
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = RoleNames.AdminOrManager)]
     [HttpDelete("{reviewId}")]
     public async Task<ActionResult> DeleteById(string reviewId)
     {

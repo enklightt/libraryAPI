@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LibraryAPI.DTOs;
@@ -7,7 +8,8 @@ using System.Security.Claims;
 namespace LibraryAPI.Controllers;
 
 [ApiController]
-[Route("api/v1/reading-progress")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/reading-progress")]
 [Authorize]
 public class ReadingProgressController : ControllerBase
 {
