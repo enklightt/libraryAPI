@@ -1,29 +1,65 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading.RateLimiting;
+using Asp.Versioning;
+using DotNetEnv;
+using LibraryAPI;
 using LibraryAPI.Data;
+using LibraryAPI.Infrastructure;
 using LibraryAPI.Middleware;
 using LibraryAPI.Services;
-using LibraryAPI;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
+Env.TraversePath().Load();
+
 var builder = WebApplication.CreateBuilder(args);
+var isTesting = builder.Environment.IsEnvironment("Testing");
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 21)),
-        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null
+if (!isTesting)
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "ConnectionStrings:DefaultConnection is not configured. " +
+            "Copy .env.example to .env and provide the database connection string.");
+    }
+
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseMySql(
+            connectionString,
+            new MySqlServerVersion(new Version(8, 0, 21)),
+            mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            )
         )
-    )
-);
+    );
+}
 
-var jwtSecret = builder.Configuration["JwtSettings:Secret"]!;
+var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    if (!isTesting)
+    {
+        throw new InvalidOperationException(
+            "JwtSettings:Secret is not configured. " +
+            "Copy .env.example to .env and provide a secret of at least 32 characters.");
+    }
+
+    jwtSecret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+}
+
+builder.Configuration["JwtSettings:Secret"] = jwtSecret;
+
+if (jwtSecret.Length < 32)
+    throw new InvalidOperationException("JwtSettings:Secret must be at least 32 characters long.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
