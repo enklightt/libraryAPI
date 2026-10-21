@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using LibraryAPI.Data; // ← заміни на свій namespace DbContext
@@ -21,6 +22,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // Прибираємо реєстрацію реального DbContext
             services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
             services.RemoveAll(typeof(AppDbContext));
+            services.RemoveAll(typeof(IDbContextOptionsConfiguration<AppDbContext>));
 
             // Відкриваємо з'єднання з SQLite в пам'яті (тримати відкритим на весь час тестів)
             _connection = new SqliteConnection("DataSource=:memory:");
