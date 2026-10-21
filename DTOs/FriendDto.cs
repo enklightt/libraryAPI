@@ -21,6 +21,8 @@ public class FriendProfileDto
 
 public class AddFriendDto
 {
+    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "UserId є обов'язковим")]
+    [System.ComponentModel.DataAnnotations.StringLength(36, MinimumLength = 1, ErrorMessage = "Некоректний UserId")]
     public string UserId { get; set; } = null!;
 }
 

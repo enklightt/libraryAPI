@@ -59,20 +59,7 @@ namespace LibraryAPI.Services
 
             _logger.LogInformation("Користувач з email {Email} успішно зареєстрований", dto.Email);
 
-            var result = new
-            {
-                accessToken,
-                refreshToken,
-                user = new
-                {
-                    user.Id,
-                    user.Name,
-                    user.Email,
-                    Role = user.Role.Name
-                }
-            };
-
-            return (true, null, result);
+            return (true, null, CreateAuthResponse(user, accessToken, refreshToken));
         }
 
         public async Task<(bool Success, string? Error, object? Data)> LoginAsync(LoginDto dto)
@@ -107,20 +94,7 @@ namespace LibraryAPI.Services
 
             _logger.LogInformation("Користувач {Email} успішно увійшов у систему", dto.Email);
 
-            var result = new
-            {
-                accessToken,
-                refreshToken,
-                user = new
-                {
-                    user.Id,
-                    user.Name,
-                    user.Email,
-                    Role = user.Role?.Name
-                }
-            };
-
-            return (true, null, result);
+            return (true, null, CreateAuthResponse(user, accessToken, refreshToken));
         }
 
         public async Task<(bool Success, string? Error, object? Data)> RefreshTokenAsync(RefreshTokenRequest dto)
@@ -147,28 +121,12 @@ namespace LibraryAPI.Services
             _context.RefreshTokens.Remove(storedToken);
             var newRefreshToken = await GenerateAndStoreRefreshToken(storedToken.User);
 
-            var result = new
-            {
-                accessToken = newAccessToken,
-                refreshToken = newRefreshToken,
-                user = new
-                {
-                    storedToken.User.Id,
-                    storedToken.User.Name,
-                    storedToken.User.Email,
-                    Role = storedToken.User.Role?.Name
-                }
-            };
-
-            return (true, null, result);
+            return (true, null, CreateAuthResponse(storedToken.User, newAccessToken, newRefreshToken));
         }
 
         private async Task<string> GenerateAndStoreRefreshToken(User user)
         {
-            var randomBytes = new byte[64];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomBytes);
-            var token = Convert.ToBase64String(randomBytes);
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 
             var refreshTokenExpiryDays = _configuration.GetValue<int>("JwtSettings:RefreshTokenExpiryDays", 7);
 
@@ -189,6 +147,22 @@ namespace LibraryAPI.Services
             await _context.SaveChangesAsync();
 
             return token;
+        }
+
+        private static object CreateAuthResponse(User user, string accessToken, string refreshToken)
+        {
+            return new
+            {
+                accessToken,
+                refreshToken,
+                user = new
+                {
+                    user.Id,
+                    user.Name,
+                    user.Email,
+                    Role = user.Role?.Name
+                }
+            };
         }
 
         private string GenerateJwtToken(User user)

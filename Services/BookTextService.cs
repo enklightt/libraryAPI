@@ -1,7 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LibraryAPI.Data;
+using LibraryAPI.Infrastructure;
+using LibraryAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using Polly.CircuitBreaker;
 
 namespace LibraryAPI.Services;
 
@@ -11,7 +14,10 @@ public class BookTextService : IBookTextService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<BookTextService> _logger;
 
-    public BookTextService(AppDbContext context, IHttpClientFactory httpClientFactory, ILogger<BookTextService> logger)
+    public BookTextService(
+        AppDbContext context,
+        IHttpClientFactory httpClientFactory,
+        ILogger<BookTextService> logger)
     {
         _context = context;
         _httpClientFactory = httpClientFactory;
@@ -20,31 +26,40 @@ public class BookTextService : IBookTextService
 
     public async Task<(bool Found, string? Text, string? Title, string? Author)> GetBookTextAsync(string bookId)
     {
-        var book = await _context.Books.FirstOrDefaultAsync(b => b.Id == bookId);
+        var book = await _context.Books
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == bookId);
+
         if (book == null)
             return (false, null, null, null);
 
         try
         {
-            if (book.GutenbergId.HasValue)
-            {
-                return await FetchFromGutenberg(book.GutenbergId.Value, book.Title, book.Author);
-            }
+            var client = _httpClientFactory.CreateClient(HttpClientExtensions.ExternalContentClientName);
 
-            return await SearchGutendex(book);
+            if (book.GutenbergId.HasValue)
+                return await FetchFromGutenberg(client, book.GutenbergId.Value, book.Title, book.Author);
+
+            return await SearchGutendex(client, book);
         }
-        catch (Exception ex)
+        catch (BrokenCircuitException ex)
+        {
+            _logger.LogWarning(ex, "External content circuit breaker is open for book {BookId}", bookId);
+            return (false, null, null, null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             _logger.LogWarning(ex, "Failed to fetch text for book {BookId}", bookId);
             return (false, null, null, null);
         }
     }
 
-    private async Task<(bool Found, string? Text, string? Title, string? Author)> FetchFromGutenberg(int gutenbergId, string title, string author)
+    private static async Task<(bool Found, string? Text, string? Title, string? Author)> FetchFromGutenberg(
+        HttpClient httpClient,
+        int gutenbergId,
+        string title,
+        string author)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.Timeout = TimeSpan.FromSeconds(15);
-
         var urls = new[]
         {
             $"https://www.gutenberg.org/files/{gutenbergId}/{gutenbergId}-0.txt",
@@ -54,24 +69,23 @@ public class BookTextService : IBookTextService
 
         foreach (var textUrl in urls)
         {
-            var textResponse = await httpClient.GetAsync(textUrl);
-            if (textResponse.IsSuccessStatusCode)
-            {
-                var text = await textResponse.Content.ReadAsStringAsync();
-                return (true, text, title, author);
-            }
+            using var textResponse = await httpClient.GetAsync(textUrl);
+            if (!textResponse.IsSuccessStatusCode)
+                continue;
+
+            var text = await textResponse.Content.ReadAsStringAsync();
+            return (true, text, title, author);
         }
 
         return (false, null, null, null);
     }
 
-    private async Task<(bool Found, string? Text, string? Title, string? Author)> SearchGutendex(Book book)
+    private static async Task<(bool Found, string? Text, string? Title, string? Author)> SearchGutendex(
+        HttpClient httpClient,
+        Book book)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.Timeout = TimeSpan.FromSeconds(15);
-
         var gutendexUrl = $"https://gutendex.com/books?search={Uri.EscapeDataString(book.Title)}";
-        var gutendexResponse = await httpClient.GetAsync(gutendexUrl);
+        using var gutendexResponse = await httpClient.GetAsync(gutendexUrl);
         if (!gutendexResponse.IsSuccessStatusCode)
             return (false, null, null, null);
 
@@ -86,24 +100,25 @@ public class BookTextService : IBookTextService
         if (gutenbergBook == null)
             return (false, null, null, null);
 
-        return await FetchFromGutenberg(gutenbergBook.Id, book.Title, book.Author);
+        return await FetchFromGutenberg(httpClient, gutenbergBook.Id, book.Title, book.Author);
     }
 
-    private class GutendexResponse
+    private sealed class GutendexResponse
     {
         [JsonPropertyName("results")]
         public List<GutendexBook>? Results { get; set; }
     }
 
-    private class GutendexBook
+    private sealed class GutendexBook
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
+
         [JsonPropertyName("authors")]
         public List<GutendexAuthor>? Authors { get; set; }
     }
 
-    private class GutendexAuthor
+    private sealed class GutendexAuthor
     {
         [JsonPropertyName("name")]
         public string? Name { get; set; }

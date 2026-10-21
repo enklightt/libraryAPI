@@ -24,15 +24,19 @@ namespace LibraryAPI.DTOs
         [StringLength(500, ErrorMessage = "Посилання на файл занадто довге")]
         public string? PdfUrl { get; set; }
 
+        [StringLength(1000, ErrorMessage = "Цитата занадто довга")]
         public string? Quote { get; set; }
 
         [Range(1, 100000, ErrorMessage = "Кількість сторінок має бути від 1 до 100000")]
         public int? Pages { get; set; }
 
+        [StringLength(500, ErrorMessage = "Посилання на зображення занадто довге")]
         public string? ImageUrl { get; set; }
 
+        [Range(1, 100000, ErrorMessage = "GutenbergId має бути від 1 до 100000")]
         public int? GutenbergId { get; set; }
 
+        [StringLength(5000, ErrorMessage = "Опис занадто довгий")]
         public string? Description { get; set; }
     }
 }

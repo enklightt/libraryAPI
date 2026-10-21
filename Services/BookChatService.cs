@@ -1,147 +1,206 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using LibraryAPI.Data;
+using LibraryAPI.Infrastructure;
+using LibraryAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using Polly.CircuitBreaker;
 
 namespace LibraryAPI.Services
 {
     public class BookChatService : IBookChatService
     {
+        private const string GroqEndpoint = "openai/v1/chat/completions";
+        private const string DefaultModel = "llama-3.3-70b-versatile";
+
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<BookChatService> _logger;
 
-        public BookChatService(AppDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public BookChatService(
+            AppDbContext context,
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration,
+            ILogger<BookChatService> logger)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<string?> AskAboutBookAsync(string bookId, string question, int? currentPage = null)
         {
-            var book = await _context.Books.Include(b => b.Genre).FirstOrDefaultAsync(b => b.Id == bookId);
-            if (book == null) return null;
+            var book = await GetBookAsync(bookId);
+            if (book == null)
+                return null;
 
             var apiKey = _configuration["GroqSettings:ApiKey"];
-            var model = _configuration["GroqSettings:Model"] ?? "llama-3.3-70b-versatile";
-            if (string.IsNullOrEmpty(apiKey)) return "API ключ не налаштовано";
+            if (string.IsNullOrWhiteSpace(apiKey))
+                return "API ключ не налаштовано";
 
-            var contextText = $"Назва: {book.Title}\nАвтор: {book.Author}";
-            if (book.Genre != null) contextText += $"\nЖанр: {book.Genre.Name}";
-            if (book.Pages.HasValue) contextText += $"\nСторінок: {book.Pages}";
-            if (!string.IsNullOrEmpty(book.Description)) contextText += $"\nОпис: {book.Description}";
-            if (!string.IsNullOrEmpty(book.Quote)) contextText += $"\nЦитата: \"{book.Quote}\"";
-            if (book.Rating.HasValue) contextText += $"\nРейтинг: {book.Rating}/5";
-
-            var pageContext = currentPage.HasValue ? $"\nКористувач зараз читає сторінку {currentPage}." : "";
-            var prompt = $"Ти — бібліотечний помічник, який знає все про книги. Відповідай коротко і по суті українською мовою. Не використовуй виділення зірочками або markdown.{pageContext}\n\nІнформація про книгу:\n{contextText}\n\nПитання користувача: {question}\n\nВідповідь:";
-
-            var client = _httpClientFactory.CreateClient();
-            var requestBody = new
-            {
-                model,
-                messages = new[]
-                {
-                    new { role = "user", content = prompt }
-                },
-                max_tokens = 500,
-                temperature = 0.7
-            };
-
-            var json = JsonSerializer.Serialize(requestBody);
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
-            httpRequest.Headers.Add("Authorization", $"Bearer {apiKey}");
-            httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            var request = BuildRequest(apiKey, BuildPrompt(book, question, currentPage), stream: false);
+            var client = _httpClientFactory.CreateClient(HttpClientExtensions.GroqClientName);
 
             try
             {
-                var response = await client.SendAsync(httpRequest);
+                using var response = await client.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorBody = await response.Content.ReadAsStringAsync();
-                    return $"Помилка API: {response.StatusCode}";
+                    _logger.LogWarning(
+                        "Groq API returned {StatusCode} for book {BookId}",
+                        (int)response.StatusCode,
+                        bookId);
+                    return "AI-сервіс тимчасово недоступний";
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(responseBody);
-                var choice = doc.RootElement.GetProperty("choices")[0];
-                var message = choice.GetProperty("message").GetProperty("content").GetString();
-                return message?.Trim();
+                using var document = JsonDocument.Parse(responseBody);
+                var content = document.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString();
+
+                return content?.Trim();
             }
-            catch (HttpRequestException)
+            catch (BrokenCircuitException ex)
             {
-                return "Не вдалося з'єднатися з API";
+                _logger.LogWarning(ex, "Groq circuit breaker is open");
+                return "AI-сервіс тимчасово недоступний. Спробуйте пізніше";
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+            {
+                _logger.LogWarning(ex, "Failed to call Groq API for book {BookId}", bookId);
+                return "Не вдалося отримати відповідь від AI-сервісу";
             }
         }
 
         public async Task AskAboutBookStreamAsync(string bookId, string question, Func<string, Task> onChunk, int? currentPage = null)
         {
-            var book = await _context.Books.Include(b => b.Genre).FirstOrDefaultAsync(b => b.Id == bookId);
-            if (book == null) return;
+            var book = await GetBookAsync(bookId);
+            if (book == null)
+                return;
 
             var apiKey = _configuration["GroqSettings:ApiKey"];
-            var model = _configuration["GroqSettings:Model"] ?? "llama-3.3-70b-versatile";
-            if (string.IsNullOrEmpty(apiKey)) return;
+            if (string.IsNullOrWhiteSpace(apiKey))
+                return;
 
-            var contextText = $"Назва: {book.Title}\nАвтор: {book.Author}";
-            if (book.Genre != null) contextText += $"\nЖанр: {book.Genre.Name}";
-            if (book.Pages.HasValue) contextText += $"\nСторінок: {book.Pages}";
-            if (!string.IsNullOrEmpty(book.Description)) contextText += $"\nОпис: {book.Description}";
-            if (!string.IsNullOrEmpty(book.Quote)) contextText += $"\nЦитата: \"{book.Quote}\"";
-            if (book.Rating.HasValue) contextText += $"\nРейтинг: {book.Rating}/5";
+            var request = BuildRequest(apiKey, BuildPrompt(book, question, currentPage), stream: true);
+            var client = _httpClientFactory.CreateClient(HttpClientExtensions.GroqClientName);
 
-            var pageContext = currentPage.HasValue ? $"\nКористувач зараз читає сторінку {currentPage}." : "";
-            var prompt = $"Ти — бібліотечний помічник, який знає все про книги. Відповідай коротко і по суті українською мовою. Не використовуй виділення зірочками або markdown.{pageContext}\n\nІнформація про книгу:\n{contextText}\n\nПитання користувача: {question}\n\nВідповідь:";
+            try
+            {
+                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning(
+                        "Groq streaming API returned {StatusCode} for book {BookId}",
+                        (int)response.StatusCode,
+                        bookId);
+                    return;
+                }
 
-            var client = _httpClientFactory.CreateClient();
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                using var reader = new StreamReader(stream);
+
+                while (await reader.ReadLineAsync() is { } line)
+                {
+                    var chunk = ParseStreamingChunk(line);
+                    if (chunk is null)
+                        continue;
+
+                    await onChunk(chunk);
+                }
+            }
+            catch (BrokenCircuitException ex)
+            {
+                _logger.LogWarning(ex, "Groq circuit breaker is open while streaming");
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+            {
+                _logger.LogWarning(ex, "Failed to stream Groq response for book {BookId}", bookId);
+            }
+        }
+
+        private async Task<Book?> GetBookAsync(string bookId)
+        {
+            return await _context.Books
+                .AsNoTracking()
+                .Include(b => b.Genre)
+                .FirstOrDefaultAsync(b => b.Id == bookId);
+        }
+
+        private static string? ParseStreamingChunk(string line)
+        {
+            if (string.IsNullOrEmpty(line) || !line.StartsWith("data: ", StringComparison.Ordinal))
+                return null;
+
+            var data = line[6..];
+            if (data == "[DONE]")
+                return null;
+
+            using var document = JsonDocument.Parse(data);
+            if (!document.RootElement.TryGetProperty("choices", out var choices) ||
+                choices.GetArrayLength() == 0)
+            {
+                return null;
+            }
+
+            var delta = choices[0].GetProperty("delta");
+            if (!delta.TryGetProperty("content", out var content))
+                return null;
+
+            var text = content.GetString();
+            return string.IsNullOrEmpty(text) ? null : text;
+        }
+
+        private static string BuildPrompt(Book book, string question, int? currentPage)
+        {
+            var contextText = new StringBuilder()
+                .AppendLine($"Назва: {book.Title}")
+                .AppendLine($"Автор: {book.Author}");
+
+            if (book.Genre != null)
+                contextText.AppendLine($"Жанр: {book.Genre.Name}");
+            if (book.Pages.HasValue)
+                contextText.AppendLine($"Сторінок: {book.Pages}");
+            if (!string.IsNullOrEmpty(book.Description))
+                contextText.AppendLine($"Опис: {book.Description}");
+            if (!string.IsNullOrEmpty(book.Quote))
+                contextText.AppendLine($"Цитата: \"{book.Quote}\"");
+            if (book.Rating.HasValue)
+                contextText.AppendLine($"Рейтинг: {book.Rating}/5");
+
+            var pageContext = currentPage.HasValue
+                ? $"\nКористувач зараз читає сторінку {currentPage}."
+                : string.Empty;
+
+            return $"Ти — бібліотечний помічник, який знає все про книги. " +
+                   $"Відповідай коротко і по суті українською мовою. " +
+                   $"Не використовуй виділення зірочками або markdown.{pageContext}\n\n" +
+                   $"Інформація про книгу:\n{contextText}\n" +
+                   $"Питання користувача: {question}\n\nВідповідь:";
+        }
+
+        private HttpRequestMessage BuildRequest(string apiKey, string prompt, bool stream)
+        {
+            var model = _configuration["GroqSettings:Model"] ?? DefaultModel;
             var requestBody = new
             {
                 model,
                 messages = new[] { new { role = "user", content = prompt } },
                 max_tokens = 500,
                 temperature = 0.7,
-                stream = true
+                stream
             };
 
             var json = JsonSerializer.Serialize(requestBody);
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
-            httpRequest.Headers.Add("Authorization", $"Bearer {apiKey}");
-            httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            try
-            {
-                var response = await client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
-                if (!response.IsSuccessStatusCode) return;
-
-                using var stream = await response.Content.ReadAsStreamAsync();
-                using var reader = new StreamReader(stream);
-
-                while (true)
-                {
-                    var line = await reader.ReadLineAsync();
-                    if (line == null) break;
-                    if (string.IsNullOrEmpty(line)) continue;
-                    if (!line.StartsWith("data: ")) continue;
-
-                    var data = line[6..];
-                    if (data == "[DONE]") break;
-
-                    using var doc = JsonDocument.Parse(data);
-                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
-                    {
-                        var delta = choices[0].GetProperty("delta");
-                        if (delta.TryGetProperty("content", out var content))
-                        {
-                            var text = content.GetString();
-                            if (!string.IsNullOrEmpty(text))
-                                await onChunk(text);
-                        }
-                    }
-                }
-            }
-            catch { }
+            var request = new HttpRequestMessage(HttpMethod.Post, GroqEndpoint);
+            request.Headers.Add("Authorization", $"Bearer {apiKey}");
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            return request;
         }
     }
 }
