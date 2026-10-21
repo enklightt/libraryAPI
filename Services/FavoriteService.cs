@@ -18,6 +18,8 @@ public class FavoriteService : IFavoriteService
 
     public async Task<IEnumerable<FavoriteBookDto>> GetUserFavoritesAsync(string userId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+
         return await _context.Favorites
             .Where(f => f.UserId == userId)
             .Include(f => f.Book)
@@ -40,6 +42,9 @@ public class FavoriteService : IFavoriteService
 
     public async Task<(bool Success, string? Error)> AddToFavoritesAsync(string userId, string bookId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
+
         _logger.LogInformation("Спроба додати книгу {BookId} до улюблених користувача {UserId}", bookId, userId);
 
         var bookExists = await _context.Books.AnyAsync(b => b.Id == bookId && b.IsActive);
@@ -74,6 +79,9 @@ public class FavoriteService : IFavoriteService
 
     public async Task<(bool Success, string? Error)> RemoveFromFavoritesAsync(string userId, string bookId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
+
         _logger.LogInformation("Спроба видалити книгу {BookId} з улюблених користувача {UserId}", bookId, userId);
 
         var favorite = await _context.Favorites
@@ -94,6 +102,9 @@ public class FavoriteService : IFavoriteService
 
     public async Task<bool> IsFavoriteAsync(string userId, string bookId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(bookId);
+
         return await _context.Favorites
             .AnyAsync(f => f.UserId == userId && f.BookId == bookId);
     }

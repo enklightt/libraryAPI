@@ -6,11 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>ecf5616d-23ad-421c-bd75-c83a0c47106a</UserSecretsId>
   </PropertyGroup>
-  <PropertyGroup>
-  <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  <NoWarn>$(NoWarn);1591</NoWarn>
-</PropertyGroup>
 
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
 		<PackageReference Include="coverlet.collector" Version="10.1.0">
@@ -40,15 +40,30 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
 
-	<ItemGroup>
+  <ItemGroup>
     <None Include="wwwroot\index.html" />
   </ItemGroup>
 
-	<ItemGroup>
-	  <Compile Remove="LibraryAPI.IntegrationTests\**\*.cs" />
-	  <EmbeddedResource Remove="LibraryAPI.IntegrationTests\**\*.cs" />
-	  <None Remove="LibraryAPI.IntegrationTests\**\*.cs" />
-	</ItemGroup>
+  <ItemGroup>
+    <Compile Remove="libraryAPI.Tests\**;LibraryAPI.IntegrationTests\**;Tests\**" />
+    <Content Remove="libraryAPI.Tests\**;LibraryAPI.IntegrationTests\**;Tests\**" />
+    <EmbeddedResource Remove="libraryAPI.Tests\**;LibraryAPI.IntegrationTests\**;Tests\**" />
+    <None Remove="libraryAPI.Tests\**;LibraryAPI.IntegrationTests\**;Tests\**" />
+  </ItemGroup>
 
 </Project>

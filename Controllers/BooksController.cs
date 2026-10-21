@@ -1,4 +1,4 @@
-﻿using LibraryAPI.DTOs;
+using LibraryAPI.DTOs;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
