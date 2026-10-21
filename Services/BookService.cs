@@ -1,30 +1,85 @@
 using LibraryAPI.Data;
 using LibraryAPI.DTOs;
+using LibraryAPI.Infrastructure;
 using LibraryAPI.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace LibraryAPI.Services
 {
     public class BookService : IBookService
     {
+        private const int MaxPageSize = 100;
+
         private readonly AppDbContext _context;
         private readonly ILogger<BookService> _logger;
+        private readonly IMemoryCache _cache;
+        private readonly CachingOptions _options;
+        private readonly RequestCacheStatus _cacheStatus;
 
-        public BookService(AppDbContext context, ILogger<BookService> logger)
+        private static int _listVersion = 1;
+
+        public BookService(
+            AppDbContext context,
+            ILogger<BookService> logger,
+            IMemoryCache cache,
+            IOptions<CachingOptions> options,
+            RequestCacheStatus cacheStatus)
         {
             _context = context;
             _logger = logger;
+            _cache = cache;
+            _options = options.Value;
+            _cacheStatus = cacheStatus;
         }
 
         public async Task<PagedResponse<BookResponseDto>> GetAllAsync(int page, int pageSize, string? search = null, string? genreId = null, string? sortBy = null, string sortOrder = "asc")
         {
-            var query = _context.Books.Include(b => b.Genre).AsQueryable();
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+            var cacheKey = $"{CacheKeys.BookList(page, pageSize, search, genreId, sortBy, sortOrder)}:{Volatile.Read(ref _listVersion)}";
+
+            if (_options.Enabled &&
+                _cache.TryGetValue(cacheKey, out PagedResponse<BookResponseDto>? cached) &&
+                cached is not null)
+            {
+                _cacheStatus.CacheHit = true;
+                return cached;
+            }
+
+            _cacheStatus.CacheHit = false;
+            var result = await LoadBooksAsync(page, pageSize, search, genreId, sortBy, sortOrder);
+
+            if (_options.Enabled)
+            {
+                _cache.Set(
+                    cacheKey,
+                    result,
+                    new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_options.BookListSeconds),
+                        Size = 1
+                    });
+            }
+
+            return result;
+        }
+
+        private async Task<PagedResponse<BookResponseDto>> LoadBooksAsync(int page, int pageSize, string? search, string? genreId, string? sortBy, string sortOrder)
+        {
+            var query = _context.Books
+                .AsNoTracking()
+                .Include(b => b.Genre)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var term = search.Trim().ToLower();
-                query = query.Where(b => b.Title.ToLower().Contains(term) || b.Author.ToLower().Contains(term));
+                var pattern = $"%{EscapeLikePattern(search.Trim())}%";
+                query = query.Where(b =>
+                    EF.Functions.Like(b.Title, pattern) ||
+                    EF.Functions.Like(b.Author, pattern));
             }
 
             if (!string.IsNullOrWhiteSpace(genreId))
@@ -77,9 +132,30 @@ namespace LibraryAPI.Services
             };
         }
 
+        private static string EscapeLikePattern(string value)
+        {
+            return value
+                .Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("%", "\\%", StringComparison.Ordinal)
+                .Replace("_", "\\_", StringComparison.Ordinal);
+        }
+
         public async Task<BookResponseDto?> GetByIdAsync(string id)
         {
-            return await _context.Books
+            var cacheKey = CacheKeys.BookById(id);
+
+            if (_options.Enabled &&
+                _cache.TryGetValue(cacheKey, out BookResponseDto? cached) &&
+                cached is not null)
+            {
+                _cacheStatus.CacheHit = true;
+                return cached;
+            }
+
+            _cacheStatus.CacheHit = false;
+
+            var book = await _context.Books
+                .AsNoTracking()
                 .Include(b => b.Genre)
                 .Where(b => b.Id == id)
                 .Select(b => new BookResponseDto
@@ -105,6 +181,20 @@ namespace LibraryAPI.Services
                     CreatedAt = b.CreatedAt
                 })
                 .FirstOrDefaultAsync();
+
+            if (book is not null && _options.Enabled)
+            {
+                _cache.Set(
+                    cacheKey,
+                    book,
+                    new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(_options.BookSeconds),
+                        Size = 1
+                    });
+            }
+
+            return book;
         }
 
         public async Task<(bool Success, string? Error, BookResponseDto? Book)> CreateAsync(CreateBookDto dto)
@@ -140,33 +230,15 @@ namespace LibraryAPI.Services
 
             _context.Books.Add(book);
             await _context.SaveChangesAsync();
+            InvalidateBookCaches();
 
             _logger.LogInformation("Книгу {Title} успішно створено", book.Title);
 
-            var genre = book.GenreId != null ? await _context.Genres.FindAsync(book.GenreId) : null;
+            var genre = book.GenreId != null
+                ? await _context.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == book.GenreId)
+                : null;
 
-            return (true, null, new BookResponseDto
-            {
-                Id = book.Id,
-                Title = book.Title,
-                Author = book.Author,
-                Isbn = book.Isbn,
-                GenreId = book.GenreId,
-                GenreName = genre?.Name,
-                ImageUrl = book.ImageUrl,
-                Description = book.Description,
-                GutenbergId = book.GutenbergId,
-
-                TotalCopies = book.TotalCopies,
-                AvailableCopies = book.AvailableCopies,
-                PdfUrl = book.PdfUrl,
-                Quote = book.Quote,
-                Pages = book.Pages,
-                Rating = book.Rating,
-                ReviewCount = 0,
-                IsActive = book.IsActive,
-                CreatedAt = book.CreatedAt
-            });
+            return (true, null, MapToDto(book, genre?.Name, reviewCount: 0));
         }
 
         public async Task<(bool Success, string? Error)> UpdateAsync(string id, UpdateBookDto dto)
@@ -205,6 +277,7 @@ namespace LibraryAPI.Services
             book.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+            InvalidateBookCaches(id);
             _logger.LogInformation("Книгу з id {Id} успішно оновлено", id);
 
             return (true, null);
@@ -221,17 +294,14 @@ namespace LibraryAPI.Services
                 return (false, "Книгу не знайдено");
             }
 
-            var reviews = await _context.Reviews.Where(r => r.BookId == id).ToListAsync();
-            _context.Reviews.RemoveRange(reviews);
-            var favorites = await _context.Favorites.Where(f => f.BookId == id).ToListAsync();
-            _context.Favorites.RemoveRange(favorites);
-            var readingProgress = await _context.ReadingProgress.Where(rp => rp.BookId == id).ToListAsync();
-            _context.ReadingProgress.RemoveRange(readingProgress);
-            var wantToRead = await _context.WantToRead.Where(w => w.BookId == id).ToListAsync();
-            _context.WantToRead.RemoveRange(wantToRead);
+            await _context.Reviews.Where(r => r.BookId == id).ExecuteDeleteAsync();
+            await _context.Favorites.Where(f => f.BookId == id).ExecuteDeleteAsync();
+            await _context.ReadingProgress.Where(rp => rp.BookId == id).ExecuteDeleteAsync();
+            await _context.WantToRead.Where(w => w.BookId == id).ExecuteDeleteAsync();
 
             _context.Books.Remove(book);
             await _context.SaveChangesAsync();
+            InvalidateBookCaches(id);
             _logger.LogInformation("Книгу з id {Id} успішно видалено", id);
 
             return (true, null);
@@ -263,9 +333,43 @@ namespace LibraryAPI.Services
             book.PdfUrl = $"/books/{fileName}";
             book.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+            InvalidateBookCaches(id);
 
             _logger.LogInformation("PDF завантажено для книги {Id}: {FileName}", id, fileName);
             return (true, null);
+        }
+
+        private void InvalidateBookCaches(string? bookId = null)
+        {
+            Interlocked.Increment(ref _listVersion);
+
+            if (!string.IsNullOrWhiteSpace(bookId))
+                _cache.Remove(CacheKeys.BookById(bookId));
+        }
+
+        private static BookResponseDto MapToDto(Book book, string? genreName, int reviewCount)
+        {
+            return new BookResponseDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Isbn = book.Isbn,
+                GenreId = book.GenreId,
+                GenreName = genreName,
+                ImageUrl = book.ImageUrl,
+                Description = book.Description,
+                GutenbergId = book.GutenbergId,
+                TotalCopies = book.TotalCopies,
+                AvailableCopies = book.AvailableCopies,
+                PdfUrl = book.PdfUrl,
+                Quote = book.Quote,
+                Pages = book.Pages,
+                Rating = book.Rating,
+                ReviewCount = reviewCount,
+                IsActive = book.IsActive,
+                CreatedAt = book.CreatedAt
+            };
         }
     }
 }
