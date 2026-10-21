@@ -184,11 +184,77 @@ builder.Services.AddScoped<IBookTextService, BookTextService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IBookChatService, BookChatService>();
 builder.Services.AddScoped<IBookPdfService, BookPdfService>();
+builder.Services.AddScoped<IGenreService, GenreService>();
+
+var rateLimitingOptions = builder.Configuration
+    .GetSection(RateLimitingOptions.SectionName)
+    .Get<RateLimitingOptions>() ?? new RateLimitingOptions();
+var rateLimitingEnabled = rateLimitingOptions.Enabled && !isTesting;
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter =
+                Math.Ceiling(retryAfter.TotalSeconds).ToString();
+        }
+
+        context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { message = "Перевищено ліміт запитів. Спробуйте пізніше." },
+            cancellationToken);
+    };
+
+    if (rateLimitingEnabled)
+    {
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            if (HttpMethods.IsGet(context.Request.Method) ||
+                HttpMethods.IsHead(context.Request.Method) ||
+                HttpMethods.IsOptions(context.Request.Method))
+            {
+                return RateLimitPartition.GetNoLimiter("read");
+            }
+
+            var key = RateLimitKeyProvider.GetClientKey(context);
+            return RateLimitPartition.GetFixedWindowLimiter(
+                $"write:{key}",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = rateLimitingOptions.WritePermitLimit,
+                    Window = TimeSpan.FromSeconds(rateLimitingOptions.WindowSeconds),
+                    QueueLimit = 0,
+                    AutoReplenishment = true
+                });
+        });
+    }
+
+    options.AddPolicy("auth", context =>
+    {
+        if (!rateLimitingEnabled)
+            return RateLimitPartition.GetNoLimiter("auth-disabled");
+
+        var key = RateLimitKeyProvider.GetClientKey(context);
+        return RateLimitPartition.GetFixedWindowLimiter(
+            $"auth:{key}",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = rateLimitingOptions.AuthPermitLimit,
+                Window = TimeSpan.FromSeconds(rateLimitingOptions.WindowSeconds),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+});
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!isTesting)
 {
+    using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DatabaseSeeder.SeedAsync(context);
 
