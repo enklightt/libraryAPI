@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using LibraryAPI.DTOs;
@@ -7,7 +8,8 @@ using System.Security.Claims;
 namespace LibraryAPI.Controllers;
 
 [ApiController]
-[Route("api/v1/friends")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/friends")]
 [Authorize]
 public class FriendsController : ControllerBase
 {
@@ -105,7 +107,8 @@ public class FriendsController : ControllerBase
     [HttpGet("{friendUserId}/profile")]
     public async Task<ActionResult<FriendProfileDto>> GetFriendProfile(string friendUserId)
     {
-        var profile = await _friendService.GetFriendProfileAsync(friendUserId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var profile = await _friendService.GetFriendProfileAsync(userId, friendUserId);
         if (profile == null)
             return NotFound(new { message = "Користувача не знайдено" });
 
@@ -115,14 +118,16 @@ public class FriendsController : ControllerBase
     [HttpGet("{friendUserId}/favorites")]
     public async Task<ActionResult<IEnumerable<FavoriteBookDto>>> GetFriendFavorites(string friendUserId)
     {
-        var favorites = await _friendService.GetFriendFavoritesAsync(friendUserId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var favorites = await _friendService.GetFriendFavoritesAsync(userId, friendUserId);
         return Ok(favorites);
     }
 
     [HttpGet("{friendUserId}/reading")]
     public async Task<ActionResult<IEnumerable<ReadingProgressDto>>> GetFriendReading(string friendUserId)
     {
-        var reading = await _friendService.GetFriendReadingAsync(friendUserId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var reading = await _friendService.GetFriendReadingAsync(userId, friendUserId);
         return Ok(reading);
     }
 

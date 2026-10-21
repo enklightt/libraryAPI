@@ -12,8 +12,8 @@ public interface IFriendService
     Task<bool> RejectFriendRequestAsync(string requestId, string userId);
     Task<bool> CancelFriendRequestAsync(string requestId, string userId);
     Task<bool> RemoveFriendAsync(string userId, string friendUserId);
-    Task<FriendProfileDto?> GetFriendProfileAsync(string friendUserId);
-    Task<IEnumerable<FavoriteBookDto>> GetFriendFavoritesAsync(string friendUserId);
-    Task<IEnumerable<ReadingProgressDto>> GetFriendReadingAsync(string friendUserId);
+    Task<FriendProfileDto?> GetFriendProfileAsync(string currentUserId, string friendUserId);
+    Task<IEnumerable<FavoriteBookDto>> GetFriendFavoritesAsync(string currentUserId, string friendUserId);
+    Task<IEnumerable<ReadingProgressDto>> GetFriendReadingAsync(string currentUserId, string friendUserId);
     Task<IEnumerable<UserSearchResultDto>> SearchUsersAsync(string query, string currentUserId);
 }

@@ -28,6 +28,21 @@ public class FriendService : IFriendService
         return code != null && AchievementTitles.TryGetValue(code, out var title) ? title : null;
     }
 
+    private async Task<bool> CanViewUserDataAsync(string currentUserId, string targetUserId)
+    {
+        if (currentUserId == targetUserId)
+            return true;
+
+        return await _context.Friends.AnyAsync(f =>
+            f.UserId == currentUserId && f.FriendUserId == targetUserId);
+    }
+
+    private async Task EnsureCanViewUserDataAsync(string currentUserId, string targetUserId)
+    {
+        if (!await CanViewUserDataAsync(currentUserId, targetUserId))
+            throw new UnauthorizedAccessException("Немає доступу до даних цього користувача");
+    }
+
     public async Task<IEnumerable<FriendDto>> GetFriendsAsync(string userId)
     {
         var friends = await _context.Friends
@@ -180,9 +195,11 @@ public class FriendService : IFriendService
         return true;
     }
 
-    public async Task<FriendProfileDto?> GetFriendProfileAsync(string friendUserId)
+    public async Task<FriendProfileDto?> GetFriendProfileAsync(string currentUserId, string friendUserId)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == friendUserId);
+        await EnsureCanViewUserDataAsync(currentUserId, friendUserId);
+
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == friendUserId);
         if (user == null) return null;
 
         var finished = await _context.ReadingProgress
@@ -204,8 +221,10 @@ public class FriendService : IFriendService
         };
     }
 
-    public async Task<IEnumerable<FavoriteBookDto>> GetFriendFavoritesAsync(string friendUserId)
+    public async Task<IEnumerable<FavoriteBookDto>> GetFriendFavoritesAsync(string currentUserId, string friendUserId)
     {
+        await EnsureCanViewUserDataAsync(currentUserId, friendUserId);
+
         var favorites = await _context.Favorites
             .Include(f => f.Book)
             .Where(f => f.UserId == friendUserId)
@@ -217,19 +236,21 @@ public class FriendService : IFriendService
             Id = f.Book.Id,
             Title = f.Book.Title,
             Author = f.Book.Author,
-            Isbn = f.Book.Isbn ?? "",
+            Isbn = f.Book.Isbn,
             GenreId = f.Book.GenreId,
-            TotalCopies = 1,
-            AvailableCopies = 1,
+            TotalCopies = f.Book.TotalCopies,
+            AvailableCopies = f.Book.AvailableCopies,
             PdfUrl = f.Book.PdfUrl,
             Rating = f.Book.Rating,
-            IsActive = true,
+            IsActive = f.Book.IsActive,
             AddedAt = f.AddedAt
         });
     }
 
-    public async Task<IEnumerable<ReadingProgressDto>> GetFriendReadingAsync(string friendUserId)
+    public async Task<IEnumerable<ReadingProgressDto>> GetFriendReadingAsync(string currentUserId, string friendUserId)
     {
+        await EnsureCanViewUserDataAsync(currentUserId, friendUserId);
+
         var progress = await _context.ReadingProgress
             .Include(rp => rp.Book)
             .Where(rp => rp.UserId == friendUserId && rp.Status == "reading" && rp.ProgressPercent < 100)
