@@ -118,9 +118,10 @@ namespace LibraryAPI.Services
                 using var stream = await response.Content.ReadAsStreamAsync();
                 using var reader = new StreamReader(stream);
 
-                while (!reader.EndOfStream)
+                while (true)
                 {
                     var line = await reader.ReadLineAsync();
+                    if (line == null) break;
                     if (string.IsNullOrEmpty(line)) continue;
                     if (!line.StartsWith("data: ")) continue;
 

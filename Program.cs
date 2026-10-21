@@ -7,20 +7,24 @@ using LibraryAPI.Data;
 using LibraryAPI.Middleware;
 using LibraryAPI.Services;
 using LibraryAPI;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 21)),
-        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(10),
-            errorNumbersToAdd: null
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseMySql(
+            builder.Configuration.GetConnectionString("DefaultConnection"),
+            new MySqlServerVersion(new Version(8, 0, 21)),
+            mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            )
         )
-    )
-);
+    );
+}
 
 var jwtSecret = builder.Configuration["JwtSettings:Secret"]!;
 
@@ -38,6 +42,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("database");
 
 builder.Services.AddControllers();
 
@@ -62,7 +69,23 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Library API",
+        Version = "v1",
+        Description = "API для роботи з бібліотекою книг"
+    });
+
+    // Підключення XML-коментарів
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
 
 builder.Services.AddCors(options =>
 {
@@ -84,11 +107,13 @@ builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IBookTextService, BookTextService>();
 builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IBookChatService, BookChatService>();
+builder.Services.AddScoped<IBookPdfService, BookPdfService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DatabaseSeeder.SeedAsync(context);
 
@@ -112,6 +137,9 @@ app.UseStaticFiles();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
