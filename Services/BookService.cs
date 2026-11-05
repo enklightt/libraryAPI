@@ -71,7 +71,6 @@ namespace LibraryAPI.Services
         {
             var query = _context.Books
                 .AsNoTracking()
-                .Include(b => b.Genre)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -156,7 +155,6 @@ namespace LibraryAPI.Services
 
             var book = await _context.Books
                 .AsNoTracking()
-                .Include(b => b.Genre)
                 .Where(b => b.Id == id)
                 .Select(b => new BookResponseDto
                 {

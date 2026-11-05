@@ -413,3 +413,4 @@ TestResults/
 
 # SonarScanner working directory
 .sonarqube/
+*.etlx
