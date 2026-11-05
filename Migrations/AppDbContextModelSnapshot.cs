@@ -79,7 +79,8 @@ namespace libraryAPI.Migrations
                         .HasColumnName("quote");
 
                     b.Property<decimal?>("Rating")
-                        .HasColumnType("decimal(65,30)")
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)")
                         .HasColumnName("rating");
 
                     b.Property<string>("SourceUrl")
@@ -268,7 +269,8 @@ namespace libraryAPI.Migrations
                         .HasColumnName("last_read_at");
 
                     b.Property<decimal>("ProgressPercent")
-                        .HasColumnType("decimal(65,30)")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
                         .HasColumnName("progress_percent");
 
                     b.Property<string>("Status")
@@ -396,7 +398,7 @@ namespace libraryAPI.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("email");
 
                     b.Property<string>("EquippedTitle")
@@ -427,6 +429,9 @@ namespace libraryAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.HasIndex("RoleId");
 
                     b.ToTable("users", (string)null);
@@ -454,7 +459,8 @@ namespace libraryAPI.Migrations
                 {
                     b.HasOne("LibraryAPI.Models.Genre", "Genre")
                         .WithMany("Books")
-                        .HasForeignKey("GenreId");
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Genre");
                 });
@@ -581,7 +587,7 @@ namespace libraryAPI.Migrations
                     b.HasOne("LibraryAPI.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Role");

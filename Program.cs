@@ -33,6 +33,11 @@ if (!isTesting)
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseMySql(
             connectionString,
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseMySql(
+            builder.Configuration.GetConnectionString("DefaultConnection"),
             new MySqlServerVersion(new Version(8, 0, 21)),
             mySqlOptions => mySqlOptions.EnableRetryOnFailure(
                 maxRetryCount: 5,
@@ -253,6 +258,7 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 if (!isTesting)
+if (!app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -292,5 +298,8 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 
 await app.RunAsync();
+
+public partial class Program { }
+app.Run();
 
 public partial class Program { }

@@ -2,6 +2,7 @@
 using LibraryAPI.DTOs;
 using LibraryAPI.Infrastructure;
 using LibraryAPI.Models;
+using LibraryAPI.DTOs;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +31,8 @@ namespace LibraryAPI.Controllers
             IBookChatService bookChatService,
             IBookPdfService bookPdfService,
             RequestCacheStatus cacheStatus)
+
+        public BooksController(IBookService bookService, IBookTextService bookTextService, IBookChatService bookChatService, IBookPdfService bookPdfService)
         {
             _bookService = bookService;
             _bookTextService = bookTextService;
@@ -260,6 +263,7 @@ namespace LibraryAPI.Controllers
                 return NotFound(new { message = pdfResult.Error });
 
             Response.Headers.ContentDisposition = "inline";
+            Response.Headers["Content-Disposition"] = "inline";
             return File(pdfResult.Stream, "application/pdf");
         }
 
