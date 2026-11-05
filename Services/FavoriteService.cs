@@ -19,8 +19,8 @@ public class FavoriteService : IFavoriteService
     public async Task<IEnumerable<FavoriteBookDto>> GetUserFavoritesAsync(string userId)
     {
         return await _context.Favorites
+            .AsNoTracking()
             .Where(f => f.UserId == userId)
-            .Include(f => f.Book)
             .Select(f => new FavoriteBookDto
             {
                 Id = f.Book.Id,

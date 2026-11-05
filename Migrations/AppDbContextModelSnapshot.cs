@@ -22,7 +22,7 @@ namespace libraryAPI.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("Book", b =>
+            modelBuilder.Entity("LibraryAPI.Models.Book", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("varchar(255)")
@@ -30,7 +30,7 @@ namespace libraryAPI.Migrations
 
                     b.Property<string>("Author")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("author");
 
                     b.Property<int>("AvailableCopies")
@@ -88,7 +88,7 @@ namespace libraryAPI.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("title");
 
                     b.Property<int>("TotalCopies")
@@ -101,7 +101,13 @@ namespace libraryAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Author");
+
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("GenreId");
+
+                    b.HasIndex("Title");
 
                     b.ToTable("books", (string)null);
                 });
@@ -128,6 +134,8 @@ namespace libraryAPI.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "Date");
 
                     b.ToTable("daily_activity", (string)null);
                 });
@@ -199,7 +207,7 @@ namespace libraryAPI.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("status");
 
                     b.Property<string>("ToUserId")
@@ -216,6 +224,8 @@ namespace libraryAPI.Migrations
                     b.HasIndex("FromUserId");
 
                     b.HasIndex("ToUserId");
+
+                    b.HasIndex("ToUserId", "Status");
 
                     b.ToTable("friend_requests", (string)null);
                 });
@@ -440,7 +450,7 @@ namespace libraryAPI.Migrations
                     b.ToTable("want_to_read", (string)null);
                 });
 
-            modelBuilder.Entity("Book", b =>
+            modelBuilder.Entity("LibraryAPI.Models.Book", b =>
                 {
                     b.HasOne("LibraryAPI.Models.Genre", "Genre")
                         .WithMany("Books")
@@ -462,7 +472,7 @@ namespace libraryAPI.Migrations
 
             modelBuilder.Entity("LibraryAPI.Models.Favorite", b =>
                 {
-                    b.HasOne("Book", "Book")
+                    b.HasOne("LibraryAPI.Models.Book", "Book")
                         .WithMany("Favorites")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -519,7 +529,7 @@ namespace libraryAPI.Migrations
 
             modelBuilder.Entity("LibraryAPI.Models.ReadingProgress", b =>
                 {
-                    b.HasOne("Book", "Book")
+                    b.HasOne("LibraryAPI.Models.Book", "Book")
                         .WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -549,7 +559,7 @@ namespace libraryAPI.Migrations
 
             modelBuilder.Entity("LibraryAPI.Models.Review", b =>
                 {
-                    b.HasOne("Book", "Book")
+                    b.HasOne("LibraryAPI.Models.Book", "Book")
                         .WithMany("Reviews")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -579,7 +589,7 @@ namespace libraryAPI.Migrations
 
             modelBuilder.Entity("LibraryAPI.Models.WantToRead", b =>
                 {
-                    b.HasOne("Book", "Book")
+                    b.HasOne("LibraryAPI.Models.Book", "Book")
                         .WithMany("WantToReads")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -596,7 +606,7 @@ namespace libraryAPI.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Book", b =>
+            modelBuilder.Entity("LibraryAPI.Models.Book", b =>
                 {
                     b.Navigation("Favorites");
 

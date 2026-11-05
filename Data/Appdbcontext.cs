@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using LibraryAPI.Models;
 
 namespace LibraryAPI.Data;
@@ -40,12 +40,27 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>().ToTable("users");
         modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens");
         modelBuilder.Entity<Genre>().ToTable("genres");
-        modelBuilder.Entity<Book>().ToTable("books");
+
+        modelBuilder.Entity<Book>(entity =>
+        {
+            entity.ToTable("books");
+            entity.HasIndex(b => b.Title);
+            entity.HasIndex(b => b.Author);
+            entity.HasIndex(b => b.CreatedAt);
+        });
+
         modelBuilder.Entity<Review>().ToTable("reviews");
         modelBuilder.Entity<Favorite>().ToTable("favorites");
         modelBuilder.Entity<ReadingProgress>().ToTable("reading_progress");
         modelBuilder.Entity<WantToRead>().ToTable("want_to_read");
-        modelBuilder.Entity<DailyActivity>().ToTable("daily_activity");
+
+        modelBuilder.Entity<DailyActivity>(entity =>
+        {
+            entity.ToTable("daily_activity");
+            entity.HasIndex(da => da.UserId);
+            entity.HasIndex(da => new { da.UserId, da.Date });
+        });
+
         modelBuilder.Entity<Friend>(entity =>
         {
             entity.ToTable("friends");
@@ -58,9 +73,12 @@ public class AppDbContext : DbContext
                 .HasForeignKey(f => f.FriendUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
         modelBuilder.Entity<FriendRequest>(entity =>
         {
             entity.ToTable("friend_requests");
+            entity.HasIndex(fr => fr.ToUserId);
+            entity.HasIndex(fr => new { fr.ToUserId, fr.Status });
             entity.HasOne(r => r.FromUser)
                 .WithMany()
                 .HasForeignKey(r => r.FromUserId)
