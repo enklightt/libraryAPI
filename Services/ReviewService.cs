@@ -17,7 +17,7 @@ public class ReviewService : IReviewService
     public async Task<IEnumerable<ReviewResponseDto>> GetBookReviewsAsync(string bookId)
     {
         return await _context.Reviews
-            .Include(r => r.User)
+            .AsNoTracking()
             .Where(r => r.BookId == bookId)
             .OrderByDescending(r => r.CreatedAt)
             .Select(r => new ReviewResponseDto
@@ -111,8 +111,7 @@ public class ReviewService : IReviewService
     public async Task<IEnumerable<ReviewResponseDto>> GetUserReviewsAsync(string userId)
     {
         return await _context.Reviews
-            .Include(r => r.Book)
-            .Include(r => r.User)
+            .AsNoTracking()
             .Where(r => r.UserId == userId)
             .OrderByDescending(r => r.CreatedAt)
             .Select(r => new ReviewResponseDto

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using LibraryAPI.Models;
 
 namespace LibraryAPI.Data;
@@ -36,16 +36,115 @@ public class AppDbContext : DbContext
             .HasIndex(rp => new { rp.UserId, rp.BookId })
             .IsUnique();
 
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<Book>()
+            .Property(b => b.Rating)
+            .HasPrecision(3, 2);
+
+        modelBuilder.Entity<ReadingProgress>()
+            .Property(rp => rp.ProgressPercent)
+            .HasPrecision(5, 2);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Role)
+            .WithMany(role => role.Users)
+            .HasForeignKey(u => u.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(token => token.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(token => token.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Book>()
+            .HasOne(book => book.Genre)
+            .WithMany(genre => genre.Books)
+            .HasForeignKey(book => book.GenreId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Review>()
+            .HasOne(review => review.Book)
+            .WithMany(book => book.Reviews)
+            .HasForeignKey(review => review.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Review>()
+            .HasOne(review => review.User)
+            .WithMany(user => user.Reviews)
+            .HasForeignKey(review => review.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Favorite>()
+            .HasOne(favorite => favorite.User)
+            .WithMany(user => user.Favorites)
+            .HasForeignKey(favorite => favorite.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Favorite>()
+            .HasOne(favorite => favorite.Book)
+            .WithMany(book => book.Favorites)
+            .HasForeignKey(favorite => favorite.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WantToRead>()
+            .HasOne(item => item.User)
+            .WithMany(user => user.WantToReads)
+            .HasForeignKey(item => item.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WantToRead>()
+            .HasOne(item => item.Book)
+            .WithMany(book => book.WantToReads)
+            .HasForeignKey(item => item.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReadingProgress>()
+            .HasOne(progress => progress.User)
+            .WithMany()
+            .HasForeignKey(progress => progress.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReadingProgress>()
+            .HasOne(progress => progress.Book)
+            .WithMany()
+            .HasForeignKey(progress => progress.BookId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DailyActivity>()
+            .HasOne(activity => activity.User)
+            .WithMany()
+            .HasForeignKey(activity => activity.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Role>().ToTable("roles");
         modelBuilder.Entity<User>().ToTable("users");
         modelBuilder.Entity<RefreshToken>().ToTable("refresh_tokens");
         modelBuilder.Entity<Genre>().ToTable("genres");
-        modelBuilder.Entity<Book>().ToTable("books");
+
+        modelBuilder.Entity<Book>(entity =>
+        {
+            entity.ToTable("books");
+            entity.HasIndex(b => b.Title);
+            entity.HasIndex(b => b.Author);
+            entity.HasIndex(b => b.CreatedAt);
+        });
+
         modelBuilder.Entity<Review>().ToTable("reviews");
         modelBuilder.Entity<Favorite>().ToTable("favorites");
         modelBuilder.Entity<ReadingProgress>().ToTable("reading_progress");
         modelBuilder.Entity<WantToRead>().ToTable("want_to_read");
-        modelBuilder.Entity<DailyActivity>().ToTable("daily_activity");
+
+        modelBuilder.Entity<DailyActivity>(entity =>
+        {
+            entity.ToTable("daily_activity");
+            entity.HasIndex(da => da.UserId);
+            entity.HasIndex(da => new { da.UserId, da.Date });
+        });
+
         modelBuilder.Entity<Friend>(entity =>
         {
             entity.ToTable("friends");
@@ -58,9 +157,12 @@ public class AppDbContext : DbContext
                 .HasForeignKey(f => f.FriendUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
         modelBuilder.Entity<FriendRequest>(entity =>
         {
             entity.ToTable("friend_requests");
+            entity.HasIndex(fr => fr.ToUserId);
+            entity.HasIndex(fr => new { fr.ToUserId, fr.Status });
             entity.HasOne(r => r.FromUser)
                 .WithMany()
                 .HasForeignKey(r => r.FromUserId)
