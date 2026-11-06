@@ -3,6 +3,10 @@ using System.Text.Json;
 
 namespace LibraryAPI.Middleware
 {
+    /// <summary>
+    /// Converts unhandled exceptions into safe JSON responses without exposing
+    /// stack traces, connection strings or other internal implementation details.
+    /// </summary>
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
@@ -20,21 +24,38 @@ namespace LibraryAPI.Middleware
             {
                 await _next(context);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogError(ex, "Сталася необроблена помилка під час запиту {Method} {Path}", context.Request.Method, context.Request.Path);
+                _logger.LogError(
+                    ex,
+                    "Сталася необроблена помилка під час запиту {Method} {Path}. TraceId: {TraceId}",
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.TraceIdentifier);
 
-                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                if (context.Response.HasStarted)
+                    throw;
+
+                var (statusCode, message) = ex switch
+                {
+                    KeyNotFoundException => (HttpStatusCode.NotFound, ex.Message),
+                    ArgumentException => (HttpStatusCode.BadRequest, "Некоректний запит"),
+                    UnauthorizedAccessException => (HttpStatusCode.Forbidden, "Доступ заборонено"),
+                    _ => (HttpStatusCode.InternalServerError, "Внутрішня помилка сервера")
+                };
+
+                context.Response.Clear();
+                context.Response.StatusCode = (int)statusCode;
                 context.Response.ContentType = "application/json; charset=utf-8";
 
                 var response = new
                 {
-                    message = "Внутрішня помилка сервера",
-                    details = ex.Message
+                    message,
+                    traceId = context.TraceIdentifier
                 };
 
                 var json = JsonSerializer.Serialize(response);
-                await context.Response.WriteAsync(json);
+                await context.Response.WriteAsync(json, context.RequestAborted);
             }
         }
     }
