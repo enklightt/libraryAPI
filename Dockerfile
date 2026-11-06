@@ -21,7 +21,7 @@ RUN dotnet publish libraryAPI.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
-COPY --from=build /app/publish .
+COPY --from=build --chown=app:app /app/publish .
 
 # Порт для контейнера
 EXPOSE 8080

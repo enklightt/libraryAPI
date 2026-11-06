@@ -30,7 +30,7 @@ if (!isTesting)
     if (isSqlite)
     {
         var sqliteConnection = string.IsNullOrWhiteSpace(connectionString)
-            ? "Data Source=library.db"
+            ? "Data Source=/tmp/library.db"
             : connectionString;
 
         builder.Services.AddDbContext<AppDbContext>(options =>
@@ -252,13 +252,20 @@ if (!isTesting)
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    if (context.Database.IsSqlite())
+    try
     {
-        await context.Database.EnsureCreatedAsync();
+        if (context.Database.IsSqlite())
+        {
+            await context.Database.EnsureCreatedAsync();
+        }
+        await DatabaseSeeder.SeedAsync(context);
+        await TestDataSeeder.SeedTestDataAsync(context);
+        await UpdateBooksData.UpdateAsync(context);
     }
-    await DatabaseSeeder.SeedAsync(context);
-    await TestDataSeeder.SeedTestDataAsync(context);
-    await UpdateBooksData.UpdateAsync(context);
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Database initialization warning: {Message}", ex.Message);
+    }
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
