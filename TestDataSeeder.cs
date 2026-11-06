@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using LibraryAPI.Data;
 using LibraryAPI.Models;
@@ -232,7 +233,7 @@ public static class TestDataSeeder
             var users = await context.Users.Where(u => u.RoleId == 2).ToListAsync();
             var books = await context.Books.ToListAsync();
 
-            if (users.Any() && books.Any())
+            if (users.Count > 0 && books.Count > 0)
             {
                 var progressList = new List<ReadingProgress>();
 
@@ -301,7 +302,6 @@ public static class TestDataSeeder
         if (!await context.DailyActivities.AnyAsync())
         {
             var users = await context.Users.Where(u => u.RoleId == 2).ToListAsync();
-            var rng = new Random(42);
             var today = DateTime.UtcNow.Date;
             var allActivity = new List<DailyActivity>();
 
@@ -310,16 +310,16 @@ public static class TestDataSeeder
                 for (var d = today.AddDays(-83); d <= today; d = d.AddDays(1))
                 {
                     // More realistic: some days 0, most days 5-40 pages, occasional spikes
-                    var pages = rng.Next(0, 8) switch
+                    var pages = RandomNumberGenerator.GetInt32(0, 8) switch
                     {
                         0 => 0,
                         1 => 0,
-                        2 => rng.Next(5, 15),
-                        3 => rng.Next(10, 25),
-                        4 => rng.Next(15, 35),
-                        5 => rng.Next(20, 50),
-                        6 => rng.Next(30, 70),
-                        7 => rng.Next(50, 100),
+                        2 => RandomNumberGenerator.GetInt32(5, 15),
+                        3 => RandomNumberGenerator.GetInt32(10, 25),
+                        4 => RandomNumberGenerator.GetInt32(15, 35),
+                        5 => RandomNumberGenerator.GetInt32(20, 50),
+                        6 => RandomNumberGenerator.GetInt32(30, 70),
+                        7 => RandomNumberGenerator.GetInt32(50, 100),
                         _ => 0
                     };
                     if (pages > 0)

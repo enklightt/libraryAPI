@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using LibraryAPI.Models;
+
+namespace LibraryAPI.Models;
 
 [Table("books")]
 public class Book
