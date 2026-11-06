@@ -10,10 +10,12 @@ public class ReadingProgressService : IReadingProgressService
     private const decimal CompletedProgressPercent = 100;
 
     private readonly AppDbContext _context;
+    private readonly IRecommendationService _recommendationService;
 
-    public ReadingProgressService(AppDbContext context)
+    public ReadingProgressService(AppDbContext context, IRecommendationService recommendationService)
     {
         _context = context;
+        _recommendationService = recommendationService;
     }
 
     public async Task<ReadingProgressDto> UpdateProgressAsync(string userId, UpdateReadingProgressDto dto)
@@ -79,6 +81,7 @@ public class ReadingProgressService : IReadingProgressService
         }
 
         await _context.SaveChangesAsync();
+        _recommendationService.InvalidateUserCache(userId);
 
         return await GetProgressDto(progress.Id);
     }

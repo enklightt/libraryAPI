@@ -9,11 +9,13 @@ public class FavoriteService : IFavoriteService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<FavoriteService> _logger;
+    private readonly IRecommendationService _recommendationService;
 
-    public FavoriteService(AppDbContext context, ILogger<FavoriteService> logger)
+    public FavoriteService(AppDbContext context, ILogger<FavoriteService> logger, IRecommendationService recommendationService)
     {
         _context = context;
         _logger = logger;
+        _recommendationService = recommendationService;
     }
 
     public async Task<IEnumerable<FavoriteBookDto>> GetUserFavoritesAsync(string userId)
@@ -72,6 +74,7 @@ public class FavoriteService : IFavoriteService
 
         _context.Favorites.Add(favorite);
         await _context.SaveChangesAsync();
+        _recommendationService.InvalidateUserCache(userId);
 
         _logger.LogInformation("Книгу {BookId} додано до улюблених користувача {UserId}", bookId, userId);
         return (true, null);
@@ -95,6 +98,7 @@ public class FavoriteService : IFavoriteService
 
         _context.Favorites.Remove(favorite);
         await _context.SaveChangesAsync();
+        _recommendationService.InvalidateUserCache(userId);
 
         _logger.LogInformation("Книгу {BookId} видалено з улюблених користувача {UserId}", bookId, userId);
         return (true, null);

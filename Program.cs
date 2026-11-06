@@ -185,6 +185,8 @@ builder.Services.AddScoped<IFriendService, FriendService>();
 builder.Services.AddScoped<IBookChatService, BookChatService>();
 builder.Services.AddScoped<IBookPdfService, BookPdfService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddHostedService<RecommendationRefreshService>();
 
 var rateLimitingOptions = builder.Configuration
     .GetSection(RateLimitingOptions.SectionName)
