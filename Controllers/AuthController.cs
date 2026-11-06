@@ -1,11 +1,15 @@
 ﻿using LibraryAPI.DTOs;
+using Asp.Versioning;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LibraryAPI.Controllers
 {
     [ApiController]
-    [Route("api/v1/auth")]
+    [ApiVersion("1.0")]
+    [EnableRateLimiting("auth")]
+    [Route("api/v{version:apiVersion}/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
