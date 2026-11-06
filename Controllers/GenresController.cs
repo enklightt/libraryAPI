@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryAPI.Controllers
 {
+    /// <summary>Provides the available book genres.</summary>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/genres")]
@@ -19,6 +20,9 @@ namespace LibraryAPI.Controllers
             _cacheStatus = cacheStatus;
         }
 
+        /// <summary>Lists all genres.</summary>
+        /// <response code="200">The genre identifiers and names.</response>
+        /// <remarks>Example request: <code>GET /api/v1/genres</code>. Example response: <code>[{"id":"genre-guid","name":"History"}]</code></remarks>
         [HttpGet]
         public async Task<IActionResult> GetGenres()
         {

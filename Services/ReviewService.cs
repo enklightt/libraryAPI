@@ -95,15 +95,16 @@ public class ReviewService : IReviewService
         return (true, null);
     }
 
-    public async Task<(bool Success, string? Error)> DeleteByIdAsync(string reviewId)
+    public async Task<(bool Success, string? Error)> DeleteByIdAsync(string bookId, string reviewId)
     {
-        var review = await _context.Reviews.FindAsync(reviewId);
+        var review = await _context.Reviews
+            .FirstOrDefaultAsync(r => r.BookId == bookId && r.Id == reviewId);
         if (review == null)
             return (false, "Відгук не знайдено");
 
         _context.Reviews.Remove(review);
         await _context.SaveChangesAsync();
-        await RecalculateBookRating(review.BookId);
+        await RecalculateBookRating(bookId);
 
         return (true, null);
     }

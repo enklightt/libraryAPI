@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryAPI.Controllers;
 
+/// <summary>Returns achievements and titles for the authenticated user.</summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/gamification")]
@@ -20,6 +21,10 @@ public class GamificationController : ControllerBase
         _gamificationService = gamificationService;
     }
 
+    /// <summary>Lists the authenticated user's achievements and unlock states.</summary>
+    /// <response code="200">The user's achievements.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <remarks>Example request: <code>GET /api/v1/gamification/achievements</code>. Example response: <code>[{"code":"first_book","isUnlocked":true}]</code></remarks>
     [HttpGet("achievements")]
     public async Task<ActionResult<IEnumerable<AchievementDto>>> GetMyAchievements()
     {
@@ -32,6 +37,10 @@ public class GamificationController : ControllerBase
         return Ok(achievements);
     }
 
+    /// <summary>Lists titles unlocked by the authenticated user.</summary>
+    /// <response code="200">The unlocked titles.</response>
+    /// <response code="401">Authentication is required.</response>
+    /// <remarks>Example request: <code>GET /api/v1/gamification/titles</code>. Example response: <code>[{"code":"first_book","title":"Bookworm"}]</code></remarks>
     [HttpGet("titles")]
     public async Task<ActionResult<IEnumerable<object>>> GetUnlockedTitles()
     {
