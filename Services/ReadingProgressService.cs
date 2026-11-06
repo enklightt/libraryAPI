@@ -7,6 +7,8 @@ namespace LibraryAPI.Services;
 
 public class ReadingProgressService : IReadingProgressService
 {
+    private const decimal CompletedProgressPercent = 100;
+
     private readonly AppDbContext _context;
 
     public ReadingProgressService(AppDbContext context)
@@ -38,7 +40,7 @@ public class ReadingProgressService : IReadingProgressService
                 LastReadAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Status = dto.Status ?? "reading"
+                Status = dto.Status ?? ReadingStatus.Reading
             };
             _context.ReadingProgress.Add(progress);
         }
@@ -49,8 +51,8 @@ public class ReadingProgressService : IReadingProgressService
             progress.ProgressPercent = calculatedProgress;
             progress.LastReadAt = DateTime.UtcNow;
             progress.UpdatedAt = DateTime.UtcNow;
-            if (calculatedProgress >= 100)
-                progress.Status = "finished";
+            if (calculatedProgress >= CompletedProgressPercent)
+                progress.Status = ReadingStatus.Finished;
             else if (dto.Status != null)
                 progress.Status = dto.Status;
         }
@@ -105,7 +107,7 @@ public class ReadingProgressService : IReadingProgressService
     {
         var progressList = await _context.ReadingProgress
             .Include(rp => rp.Book)
-            .Where(rp => rp.UserId == userId && (rp.Status == "finished" || rp.ProgressPercent >= 100))
+            .Where(rp => rp.UserId == userId && (rp.Status == ReadingStatus.Finished || rp.ProgressPercent >= CompletedProgressPercent))
             .OrderByDescending(rp => rp.LastReadAt)
             .Take(count)
             .ToListAsync();
@@ -121,11 +123,11 @@ public class ReadingProgressService : IReadingProgressService
             .OrderBy(a => a.Date)
             .ToListAsync();
 
+        var activityByDate = activity.ToDictionary(a => a.Date, a => a.PagesRead);
         var allDays = new List<object>();
         for (var d = since; d <= DateTime.UtcNow.Date; d = d.AddDays(1))
         {
-            var match = activity.FirstOrDefault(a => a.Date == d);
-            allDays.Add(new { date = d, pages = match?.PagesRead ?? 0 });
+            allDays.Add(new { date = d, pages = activityByDate.GetValueOrDefault(d, 0) });
         }
 
         return allDays;
@@ -142,9 +144,9 @@ public class ReadingProgressService : IReadingProgressService
 
     private static ReadingProgressDto MapToDto(ReadingProgress progress)
     {
-        var status = progress.ProgressPercent >= 100 ? "finished" : progress.Status;
+        var status = progress.ProgressPercent >= CompletedProgressPercent ? ReadingStatus.Finished : progress.Status;
         if (string.IsNullOrEmpty(status))
-            status = "reading";
+            status = ReadingStatus.Reading;
 
         return new ReadingProgressDto
         {
@@ -168,6 +170,6 @@ public class ReadingProgressService : IReadingProgressService
     {
         if (totalPages <= 0) return 0;
         var percent = (decimal)currentPage / totalPages * 100;
-        return Math.Round(Math.Min(percent, 100), 2);
+        return Math.Round(Math.Min(percent, CompletedProgressPercent), 2);
     }
 }
