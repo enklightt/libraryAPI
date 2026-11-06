@@ -399,3 +399,17 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Module 3 test/profiling artifacts
+TestResults/
+*.nettrace
+*.dmp
+*.speedscope.json
+
+# SonarScanner working directory
+.sonarqube/
