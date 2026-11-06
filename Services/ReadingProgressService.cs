@@ -89,6 +89,7 @@ public class ReadingProgressService : IReadingProgressService
     public async Task<IEnumerable<ReadingProgressDto>> GetUserProgressAsync(string userId)
     {
         var progressList = await _context.ReadingProgress
+            .AsNoTracking()
             .Include(rp => rp.Book)
             .Where(rp => rp.UserId == userId)
             .OrderByDescending(rp => rp.LastReadAt)
@@ -100,6 +101,7 @@ public class ReadingProgressService : IReadingProgressService
     public async Task<ReadingProgressDto?> GetBookProgressAsync(string userId, string bookId)
     {
         var progress = await _context.ReadingProgress
+            .AsNoTracking()
             .Include(rp => rp.Book)
             .FirstOrDefaultAsync(rp => rp.UserId == userId && rp.BookId == bookId);
 
@@ -109,6 +111,7 @@ public class ReadingProgressService : IReadingProgressService
     public async Task<IEnumerable<ReadingProgressDto>> GetRecentReadsAsync(string userId, int count = 5)
     {
         var progressList = await _context.ReadingProgress
+            .AsNoTracking()
             .Include(rp => rp.Book)
             .Where(rp => rp.UserId == userId && (rp.Status == ReadingStatus.Finished || rp.ProgressPercent >= CompletedProgressPercent))
             .OrderByDescending(rp => rp.LastReadAt)
@@ -122,6 +125,7 @@ public class ReadingProgressService : IReadingProgressService
     {
         var since = DateTime.UtcNow.Date.AddDays(-weeks * 7);
         var activity = await _context.DailyActivities
+            .AsNoTracking()
             .Where(a => a.UserId == userId && a.Date >= since)
             .OrderBy(a => a.Date)
             .ToListAsync();

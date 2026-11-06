@@ -17,8 +17,8 @@ public class WantToReadService : IWantToReadService
     public async Task<IEnumerable<BookResponseDto>> GetUserWantsAsync(string userId)
     {
         var books = await _context.Set<WantToRead>()
+            .AsNoTracking()
             .Where(w => w.UserId == userId)
-            .Include(w => w.Book).ThenInclude(b => b.Genre)
             .OrderByDescending(w => w.CreatedAt)
             .Select(w => new BookResponseDto
             {
