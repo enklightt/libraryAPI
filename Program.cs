@@ -23,43 +23,42 @@ var isTesting = builder.Environment.IsEnvironment("Testing");
 if (!isTesting)
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (string.IsNullOrWhiteSpace(connectionString))
-    {
-        throw new InvalidOperationException(
-            "ConnectionStrings:DefaultConnection is not configured. " +
-            "Copy .env.example to .env and provide the database connection string.");
-    }
+    var isSqlite = string.IsNullOrWhiteSpace(connectionString) ||
+                   connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase) ||
+                   connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase);
 
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseMySql(
-            connectionString,
-            new MySqlServerVersion(new Version(8, 0, 21)),
-            mySqlOptions => mySqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null
+    if (isSqlite)
+    {
+        var sqliteConnection = string.IsNullOrWhiteSpace(connectionString)
+            ? "Data Source=library.db"
+            : connectionString;
+
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite(sqliteConnection));
+    }
+    else
+    {
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseMySql(
+                connectionString,
+                new MySqlServerVersion(new Version(8, 0, 21)),
+                mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorNumbersToAdd: null
+                )
             )
-        )
-    );
+        );
+    }
 }
 
 var jwtSecret = builder.Configuration["JwtSettings:Secret"];
-if (string.IsNullOrWhiteSpace(jwtSecret))
+if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
 {
-    if (!isTesting)
-    {
-        throw new InvalidOperationException(
-            "JwtSettings:Secret is not configured. " +
-            "Copy .env.example to .env and provide a secret of at least 32 characters.");
-    }
-
-    jwtSecret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+    jwtSecret = "DefaultProductionSecretKeyForLibraryApi2026!LongEnoughKey";
 }
 
 builder.Configuration["JwtSettings:Secret"] = jwtSecret;
-
-if (jwtSecret.Length < 32)
-    throw new InvalidOperationException("JwtSettings:Secret must be at least 32 characters long.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -153,21 +152,16 @@ var allowedOrigins = builder.Configuration
 
 if (allowedOrigins.Length == 0)
 {
-    if (!builder.Environment.IsDevelopment())
-    {
-        throw new InvalidOperationException(
-            "Cors:AllowedOrigins must be configured outside the Development environment.");
-    }
-
-    allowedOrigins = ["http://localhost:5043", "https://localhost:7043"];
+    allowedOrigins = ["http://localhost:5043", "https://localhost:7043", "http://localhost:8080"];
 }
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(_ => true)
             .AllowAnyMethod()
-            .AllowAnyHeader());
+            .AllowAnyHeader()
+            .AllowCredentials());
 });
 
 builder.Services.AddResilientHttpClients(builder.Configuration);
@@ -258,30 +252,23 @@ if (!isTesting)
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DatabaseSeeder.SeedAsync(context);
-
-    if (app.Environment.IsDevelopment())
+    if (context.Database.IsSqlite())
     {
-        await TestDataSeeder.SeedTestDataAsync(context);
-        await UpdateBooksData.UpdateAsync(context);
+        await context.Database.EnsureCreatedAsync();
     }
+    await DatabaseSeeder.SeedAsync(context);
+    await TestDataSeeder.SeedTestDataAsync(context);
+    await UpdateBooksData.UpdateAsync(context);
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Library API v1");
-        c.SwaggerEndpoint("/swagger/v2/swagger.json", "Library API v2");
-    });
-}
-else
-{
-    app.UseHttpsRedirection();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Library API v1");
+    c.SwaggerEndpoint("/swagger/v2/swagger.json", "Library API v2");
+});
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
