@@ -64,9 +64,9 @@ public class ReviewsController : ControllerBase
 
     [Authorize(Roles = RoleNames.AdminOrManager)]
     [HttpDelete("{reviewId}")]
-    public async Task<ActionResult> DeleteById(string reviewId)
+    public async Task<ActionResult> DeleteById(string bookId, string reviewId)
     {
-        var result = await _reviewService.DeleteByIdAsync(reviewId);
+        var result = await _reviewService.DeleteByIdAsync(bookId, reviewId);
 
         if (!result.Success)
             return NotFound(new { message = result.Error });

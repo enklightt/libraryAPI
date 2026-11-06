@@ -26,7 +26,8 @@ public class BooksControllerTests
             _bookServiceMock.Object,
             _bookTextServiceMock.Object,
             _bookChatServiceMock.Object,
-            _bookPdfServiceMock.Object);
+            _bookPdfServiceMock.Object,
+            new LibraryAPI.Infrastructure.RequestCacheStatus());
     }
 
     /// <summary>

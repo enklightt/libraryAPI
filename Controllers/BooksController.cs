@@ -60,7 +60,10 @@ namespace LibraryAPI.Controllers
             [FromQuery] string sortOrder = "asc")
         {
             var result = await _bookService.GetAllAsync(page, pageSize, search, genreId, sortBy, sortOrder);
-            Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
+            if (HttpContext?.Response?.Headers != null && _cacheStatus != null)
+            {
+                Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
+            }
             return Ok(result);
         }
 
@@ -81,7 +84,10 @@ namespace LibraryAPI.Controllers
             if (book == null)
                 return NotFound(new { message = "Книгу не знайдено" });
 
-            Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
+            if (HttpContext?.Response?.Headers != null && _cacheStatus != null)
+            {
+                Response.Headers["X-Cache"] = _cacheStatus.CacheHit == true ? "HIT" : "MISS";
+            }
             return Ok(book);
         }
 
@@ -259,7 +265,8 @@ namespace LibraryAPI.Controllers
             if (!pdfResult.Success || pdfResult.Stream == null)
                 return NotFound(new { message = pdfResult.Error });
 
-            Response.Headers.ContentDisposition = "inline";
+            if (HttpContext?.Response != null)
+                Response.Headers.ContentDisposition = "inline";
             return File(pdfResult.Stream, "application/pdf");
         }
 
@@ -271,6 +278,9 @@ namespace LibraryAPI.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult> AskAboutBook(string id, [FromBody] ChatRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request?.Question))
+                return BadRequest(new { message = "Питання не може бути порожнім" });
+
             var answer = await _bookChatService.AskAboutBookAsync(id, request.Question, request.CurrentPage);
 
             if (answer == null)
