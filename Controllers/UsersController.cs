@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using Asp.Versioning;
 using System.Security.Claims;
 using LibraryAPI.Data;
+using LibraryAPI.DTOs;
+using LibraryAPI.Models;
 using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore;
 namespace LibraryAPI.Controllers;
 
 [ApiController]
-[Route("api/v1/users")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/users")]
 public class UsersController : ControllerBase
 {
+    private const decimal CompletedProgressPercent = 100;
     private readonly AppDbContext _context;
     private readonly IFavoriteService _favoriteService;
     private readonly IReadingProgressService _readingProgressService;
@@ -53,10 +56,10 @@ public class UsersController : ControllerBase
         var readingProgress = await _readingProgressService.GetUserProgressAsync(userId);
         var achievements = await _gamificationService.GetUserAchievementsAsync(userId);
 
-        var finishedCount = readingProgress.Count(p => p.ProgressPercent >= 100);
+        var finishedCount = readingProgress.Count(p => p.ProgressPercent >= CompletedProgressPercent);
         var totalPages = readingProgress.Sum(p => p.CurrentPage);
         var reviewCount = await _context.Reviews.CountAsync(r => r.UserId == userId);
-        var readingCount = readingProgress.Count(p => p.Status == "reading" || p.ProgressPercent < 100);
+        var readingCount = readingProgress.Count(p => p.Status == ReadingStatus.Reading || p.ProgressPercent < CompletedProgressPercent);
 
         return Ok(new
         {
@@ -65,7 +68,7 @@ public class UsersController : ControllerBase
             user.Email,
             user.AvatarUrl,
             user.EquippedTitle,
-            Role = user.Role.Name,
+            Role = user.Role?.Name,
             user.CreatedAt,
             Favorites = favorites,
             ReadingProgress = readingProgress,
@@ -85,25 +88,23 @@ public class UsersController : ControllerBase
 
     [Authorize]
     [HttpPut("me/title")]
-    public async Task<IActionResult> SetTitle([FromBody] JsonElement body)
+    public async Task<IActionResult> SetTitle([FromBody] UpdateTitleDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized(new { message = "Користувача не авторизовано" });
 
-        var title = body.TryGetProperty("title", out var t) ? t.GetString() : null;
-
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
             return NotFound(new { message = "Користувача не знайдено" });
 
-        user.EquippedTitle = string.IsNullOrWhiteSpace(title) ? null : title;
+        user.EquippedTitle = string.IsNullOrWhiteSpace(dto.Title) ? null : dto.Title;
         await _context.SaveChangesAsync();
 
         return Ok(new { equippedTitle = user.EquippedTitle });
     }
 
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = RoleNames.AdminOrManager)]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -111,17 +112,17 @@ public class UsersController : ControllerBase
         return Ok(result.Data);
     }
 
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = RoleNames.Admin)]
     [HttpPut("{id}/role")]
-    public async Task<IActionResult> SetRole(string id, [FromBody] string roleName)
+    public async Task<IActionResult> SetRole(string id, [FromBody] SetRoleDto dto)
     {
-        var result = await _userAdminService.SetRoleAsync(id, roleName);
+        var result = await _userAdminService.SetRoleAsync(id, dto.RoleName);
         if (!result.Success)
             return NotFound(new { message = result.Error });
         return Ok(new { message = "Роль оновлено" });
     }
 
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = RoleNames.AdminOrManager)]
     [HttpPut("{id}/toggle-active")]
     public async Task<IActionResult> ToggleActive(string id)
     {
