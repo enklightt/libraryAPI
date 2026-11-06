@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────
+#  Docker Compose: LibraryAPI + MySQL
+# ─────────────────────────────────────────────────────────
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=library_db;User=lib_user;Password=${DB_PASSWORD:-changeme}"
+      JwtSettings__Secret: "${JWT_SECRET:-replace-with-a-random-secret-of-at-least-32-characters}"
+      JwtSettings__AccessTokenExpiryMinutes: "60"
+      JwtSettings__RefreshTokenExpiryDays: "7"
+      GroqSettings__ApiKey: "${GROQ_API_KEY:-}"
+      GroqSettings__Model: "llama-3.3-70b-versatile"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: library_db
+      MYSQL_USER: lib_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootchangeme}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "lib_user", "-p${DB_PASSWORD:-changeme}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

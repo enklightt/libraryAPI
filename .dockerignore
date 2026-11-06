@@ -1,0 +1,17 @@
+.git
+.github
+.vscode
+bin
+obj
+TestResults
+load-tests
+performance-results
+LibraryAPI.IntegrationTests
+LibraryAPI.Module3Tests
+libraryAPI.Tests
+*.md
+*.user
+*.DotSettings
+.env
+.env.*
+!.env.example

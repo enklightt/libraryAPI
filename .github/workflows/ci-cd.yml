@@ -1,0 +1,117 @@
+name: CI/CD — Build, Test & Publish
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  IMAGE_NAME: libraryapi
+
+jobs:
+  # ──────────────────────────────────────────────
+  # 1. Збірка та тестування
+  # ──────────────────────────────────────────────
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore libraryAPI.slnx
+
+      - name: Build solution
+        run: dotnet build libraryAPI.slnx --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test libraryAPI.slnx --configuration Release --no-build --verbosity normal
+
+  # ──────────────────────────────────────────────
+  # 2. Публікація Docker-образу (тільки push в main)
+  # ──────────────────────────────────────────────
+  publish:
+    name: Publish Docker Image
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version tag
+        id: version
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "date_tag=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}
+
+  # ──────────────────────────────────────────────
+  # 3. Деплой на Render (після публікації образу)
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to Render
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+            echo " — Deploy hook triggered"
+          else
+            echo "RENDER_DEPLOY_HOOK_URL not set — skipping auto-deploy"
+          fi
+
+  # ──────────────────────────────────────────────
+  # 4. Перевірка після деплою
+  # ──────────────────────────────────────────────
+  post-deploy-check:
+    name: Post-deployment Health Check
+    needs: deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Health check
+        run: |
+          if [ -n "${{ secrets.DEPLOYED_API_URL }}" ]; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.DEPLOYED_API_URL }}/health" || true)
+            echo "Health check status: $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Application is healthy"
+            else
+              echo "⚠️ Health check returned $STATUS"
+            fi
+          else
+            echo "DEPLOYED_API_URL not set — skipping health check"
+          fi
