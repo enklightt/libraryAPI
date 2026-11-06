@@ -54,7 +54,7 @@ public class ReviewsController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("~/api/v1/reviews/my")]
+    [HttpGet("~/api/v{version:apiVersion}/reviews/my")]
     public async Task<ActionResult<IEnumerable<ReviewResponseDto>>> GetMyReviews()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
